@@ -11,6 +11,7 @@ import java.util.List;
  * A data structure that will be passed from the Transaction Manager to the 
  * Data Manager. Contains a set of operations, each from different 
  * transactions, for the Data Manager to process. Implements Iterable.
+ * <p>Immutable</p>
  * @author dandelarosa
  */
 public final class Message implements Iterable<Operation> {

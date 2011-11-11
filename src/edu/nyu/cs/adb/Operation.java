@@ -2,6 +2,7 @@ package edu.nyu.cs.adb;
 
 /**
  * Describes an operation to be done by the Data Manager
+ * <p>Immutable</p>
  * @author dandelarosa
  */
 public final class Operation {

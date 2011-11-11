@@ -2,6 +2,7 @@ package edu.nyu.cs.adb;
 
 /**
  * A response object sent from the Data Manager to the Transaction Manager 
+ * <p>Immutable</p>
  * @author dandelarosa
  */
 public final class Response {
