@@ -1,1 +1,4 @@
 bin
+testscripts/testresults
+testscripts/actual/
+testscripts/error/
