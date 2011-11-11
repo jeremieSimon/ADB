@@ -22,6 +22,23 @@ public final class TransactionManager {
 	private final BufferedReader input;
 	private final BufferedWriter output;
 	
+	// Operation Generators
+	private final Operation.Builder beginOperationBuilder = 
+		new Operation.Builder(Operation.Opcode.BEGIN);
+	private final Operation.Builder beginROOperationBuilder = 
+		new Operation.Builder(Operation.Opcode.BEGIN_READONLY);
+	private final Operation.Builder readOperationBuilder = 
+		new Operation.Builder(Operation.Opcode.READ);
+	private final Operation.Builder writeOperationBuilder = 
+		new Operation.Builder(Operation.Opcode.WRITE);
+	private final Operation.Builder finishOperationBuilder = 
+		new Operation.Builder(Operation.Opcode.FINISH);
+	private final Operation.Builder abortOperationBuilder = 
+		new Operation.Builder(Operation.Opcode.ABORT);
+	
+	// Message Generator
+	private final Message.Builder messageBuilder= new Message.Builder();
+	
 	/**
 	 * This is the constructor, with additional functionality
 	 * <ol>
@@ -107,6 +124,15 @@ public final class TransactionManager {
 			String currentLine = input.readLine();
 			while (currentLine != null) {
 				// TODO implement the rest...
+				
+				// Sample Message generation code
+				messageBuilder.clear();
+				beginOperationBuilder.setTransactionID(1);
+				Operation beginT1 = 
+					beginOperationBuilder.build();
+				messageBuilder.addOperation(beginT1);
+				Message message = messageBuilder.build();
+				
 				
 				output.write(""); // temporary code So the compiler doesn't throw an exception...
 				
