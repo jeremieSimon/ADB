@@ -76,6 +76,10 @@ public final class Operation {
 		 * @return self
 		 */
 		public Builder setVariableID (int variableID) {
+			if (this.opcode != Opcode.READ && this.opcode != Opcode.WRITE) {
+				throw new UnsupportedOperationException("Not a read or " +
+						"write operation");
+			}
 			this.variableID = variableID;
 			return this;
 		}
@@ -122,7 +126,13 @@ public final class Operation {
 	 * operation is asked to act on
 	 * @return The variable ID
 	 */
-	public int getVariableID () { return variableID; }
+	public int getVariableID () {
+		if (this.opcode != Opcode.READ && this.opcode != Opcode.WRITE) {
+			throw new UnsupportedOperationException("Not a read or " +
+					"write operation");
+		}
+		return variableID;
+	}
 	
 	/**
 	 * If the operation is a write operation, get the value it is supposed to 

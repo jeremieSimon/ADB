@@ -117,5 +117,10 @@ public final class Response {
 	 * Reads the value, usually this in response to a read request
 	 * @return The value returned from the a read operation
 	 */
-	public int getReadValue () { return readValue; }
+	public int getReadValue () { 
+		if (this.status != Status.SUCCESS) {
+			throw new UnsupportedOperationException("No read value available");
+		}
+		return readValue;
+	}
 }
