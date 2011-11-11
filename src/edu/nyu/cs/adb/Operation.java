@@ -6,15 +6,101 @@ package edu.nyu.cs.adb;
  */
 public final class Operation {
 	private final int transactionID;
-	private final int opcode;
+	private final Opcode opcode;
 	private final int variableID;
 	private final int writeValue;
+	
+	/**
+	 * Operation code values
+	 * @author dandelarosa
+	 */
+	public static enum Opcode {
+		BEGIN, 
+		BEGIN_READONLY, 
+		READ, 
+		WRITE,
+		ABORT, 
+		FINISH
+	}
 	
 	/**
 	 * Prevent Instantiation!
 	 */
 	private Operation () {
 		throw new AssertionError();
+	}
+	
+	/**
+	 * Constructs a new Operation from a builder object
+	 * @param builder
+	 */
+	private Operation (Builder builder) {
+		this.opcode = builder.opcode;
+		this.transactionID = builder.transactionID;
+		this.variableID = builder.variableID;
+		this.writeValue = builder.writeValue;
+	}
+	
+	/**
+	 * Builder class for Operation
+	 * @author dandelarosa
+	 */
+	public static class Builder {
+		private int transactionID;
+		private final Opcode opcode;
+		private int variableID;
+		private int writeValue;
+		
+		/**
+		 * Create a builder for a given operation
+		 * @param opcode
+		 */
+		public Builder (Opcode opcode) {
+			this.opcode = opcode;
+		}
+		
+		/**
+		 * Set the transaction ID
+		 * @param transactionID
+		 * @return self
+		 */
+		public Builder setTransactionID (int transactionID) {
+			this.transactionID = transactionID;
+			return this;
+		}
+		
+		/**
+		 * Set the variableID
+		 * @param variableID
+		 * @return self
+		 */
+		public Builder setVariableID (int variableID) {
+			this.variableID = variableID;
+			return this;
+		}
+		
+		/**
+		 * Set the write value
+		 * @param writeValue
+		 * @return self
+		 * @throws UnsupportedOperationException if this not a write operation
+		 */
+		public Builder setWriteValue (int writeValue) {
+			if (this.opcode != Opcode.WRITE) {
+				throw new UnsupportedOperationException("Write value " +
+						"should be defined only for write operations.");
+			}
+			this.writeValue = writeValue;
+			return this;
+		}
+		
+		/**
+		 * Generate a new Operation from the builder
+		 * @return a new instance of Operation
+		 */
+		public Operation build () {
+			return new Operation(this);
+		}
 	}
 
 	/**
@@ -28,7 +114,7 @@ public final class Operation {
 	 * beginReadOnly, read, write, abort, or finish
 	 * @return The opcode
 	 */
-	public int getOperationID () { return opcode; } // TODO this should be an enum instead
+	public Opcode getOperationID () { return opcode; }
 	
 	/**
 	 * If this operation is a read or write, get the ID of the variable the 
@@ -41,6 +127,12 @@ public final class Operation {
 	 * If the operation is a write operation, get the value it is supposed to 
 	 * write
 	 * @return The write value
+	 * @throws UnsupportedOperationException if this is not a write operation
 	 */
-	public int getWriteValue () { return writeValue; }
+	public int getWriteValue () {
+		if (this.opcode != Opcode.WRITE) {
+			throw new UnsupportedOperationException("Not a write operation");
+		}
+		return writeValue;
+	}
 }
