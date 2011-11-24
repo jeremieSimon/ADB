@@ -13,11 +13,93 @@ import java.util.Map;
  */
 public final class DataManager {
 	private final int siteID;
-	int currentTime = 0;
-	private Message currentMessage = null;
-	Map<String, List<CommittedValue>> stableStorage 
-		= new HashMap<String, List<CommittedValue>>();
+	private int currentTime = 0;
+	private boolean isActive = true;
 	
+	private Message currentMessage = null;
+	
+	private Map<String, List<CommittedValue>> stableStorage 
+		= new HashMap<String, List<CommittedValue>>();
+	private Map<String, Integer> unstableStorage 
+		= new HashMap<String, Integer>();
+	
+	/**
+	 * Data structure for a read-only transaction
+	 */
+	private static final class ReadOnlyTransaction {
+		private final String transactionID;
+		private final int startTime;
+		
+		/**
+		 * Constructor
+		 * @param transactionID
+		 * @param startTime
+		 */
+		private ReadOnlyTransaction (String transactionID, int startTime) {
+			this.transactionID = transactionID;
+			this.startTime = startTime;
+		}
+		
+		/**
+		 * Get the transaction ID
+		 * @return
+		 */
+		private String getTransactionID () {
+			return transactionID;
+		}
+		
+		/**
+		 * Get the time the transaction started
+		 * @return
+		 */
+		private int getStartTime () {
+			return startTime;
+		}
+	}
+	private List<ReadOnlyTransaction> readOnlyTransactions 
+		= new LinkedList<ReadOnlyTransaction>();
+	
+	private List<String> readWriteTransactions = new LinkedList<String>();
+	
+	/**
+	 * Lock information
+	 * @author dandelarosa
+	 */
+	private static final class Lock {
+		private final String transactionID;
+		private final String variableID;
+		
+		/**
+		 * Constructor
+		 * @param transactionID
+		 * @param variableID
+		 */
+		private Lock (String transactionID, String variableID) {
+			this.transactionID = transactionID;
+			this.variableID = variableID;
+		}
+		
+		/**
+		 * Get the transaction ID
+		 * @return
+		 */
+		private String getTransactionID () {
+			return transactionID;
+		}
+		
+		/**
+		 * Get the variable ID
+		 * @return
+		 */
+		private String getVariableID () {
+			return variableID;
+		}
+	}
+	private List<Lock> readLocks = new LinkedList<Lock>();
+	private List<Lock> writeLocks = new LinkedList<Lock>();
+
+	private Map<String, Map<String, Integer>> beforeImages 
+		= new HashMap<String, Map<String, Integer>>();	
 	/**
 	 * Constructor
 	 * Ideally we'd actually do initialization of variables via a builder
@@ -25,7 +107,7 @@ public final class DataManager {
 	 * project.
 	 * @param siteID
 	 */
-	DataManager(int siteID) {
+	DataManager (int siteID) {
 		this.siteID = siteID;
 		
 		// Even indexed variables are at all sites
@@ -60,7 +142,7 @@ public final class DataManager {
 		 * @param value
 		 * @param timestamp
 		 */
-		private CommittedValue(int value, int timestamp) {
+		private CommittedValue (int value, int timestamp) {
 			this.value = value;
 			this.timestamp = timestamp;
 		}
@@ -69,7 +151,7 @@ public final class DataManager {
 		 * Gets the committed value
 		 * @return
 		 */
-		private int getValue() {
+		private int getValue () {
 			return value;
 		}
 
@@ -77,7 +159,7 @@ public final class DataManager {
 		 * Gets the time when the value was committed
 		 * @return
 		 */
-		private int getTimestamp() {
+		private int getTimestamp () {
 			return timestamp;
 		}
 	}
@@ -95,6 +177,10 @@ public final class DataManager {
 	 * timestep.
 	 */
 	void update () {
+		// Don't process any messages if the site has failed
+		if (!isActive) return;
+		
+		// Don't process any messages if there isn't any
 		if (currentMessage != null) return;
 		
 		for (Operation operation : currentMessage) {
@@ -104,18 +190,27 @@ public final class DataManager {
 					break;
 				case BEGIN:
 					// TODO
+					// TODO add to read/write transactions
+					// Also: error checking
 					break;
 				case BEGIN_READONLY:
 					// TODO
+					// TODO add to read-only transactions
+					// Also: error checking
 					break;
 				case FINISH:
 					// TODO
+					// Commit value you had a lock on
+					// Remove the lock
 					break;
 				case READ:
 					// TODO
+					// IF RO read from stable storage history
+					// IF RW ask for read lock
 					break;
 				case WRITE:
 					// TODO
+					// Ask for write lock
 					break;
 			}
 		}
@@ -129,6 +224,7 @@ public final class DataManager {
 	 */
 	void fail () {
 		// TODO
+		isActive = false;
 	}
 	
 	/**
@@ -136,6 +232,7 @@ public final class DataManager {
 	 */
 	void recover () {
 		// TODO
+		isActive = true;
 	}
 	
 	/**
