@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class will read the input and perform operations with the DataManager 
@@ -18,6 +20,9 @@ import java.io.OutputStreamWriter;
  * @author dandelarosa
  */
 public final class TransactionManager {
+	// Our data managers
+	List<DataManager> dataManagers = new ArrayList<DataManager>();
+	
 	// TODO declare member variables here...
 	private final BufferedReader input;
 	private final BufferedWriter output;
@@ -106,7 +111,10 @@ public final class TransactionManager {
 	 * Constructor's helper function
 	 */
 	private void init () {
-		// TODO Make data managers and stuff
+		// Make data managers
+		for (int siteID = 1; siteID <= 20; siteID++) {
+			dataManagers.add(new DataManager(siteID));
+		}
 	}
 	
 	/**
