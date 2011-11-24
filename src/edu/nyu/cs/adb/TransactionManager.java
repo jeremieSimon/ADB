@@ -127,7 +127,7 @@ public final class TransactionManager {
 				
 				// Sample Message generation code
 				messageBuilder.clear();
-				beginOperationBuilder.setTransactionID(1);
+				beginOperationBuilder.setTransactionID("T1");
 				Operation beginT1 = 
 					beginOperationBuilder.build();
 				messageBuilder.addOperation(beginT1);

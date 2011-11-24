@@ -6,9 +6,9 @@ package edu.nyu.cs.adb;
  * @author dandelarosa
  */
 public final class Operation {
-	private final int transactionID;
+	private final String transactionID;
 	private final Opcode opcode;
-	private final int variableID;
+	private final String variableID;
 	private final int writeValue;
 	
 	/**
@@ -47,9 +47,9 @@ public final class Operation {
 	 * @author dandelarosa
 	 */
 	public static class Builder {
-		private int transactionID;
+		private String transactionID;
 		private final Opcode opcode;
-		private int variableID;
+		private String variableID;
 		private int writeValue;
 		
 		/**
@@ -65,7 +65,7 @@ public final class Operation {
 		 * @param transactionID
 		 * @return self
 		 */
-		public Builder setTransactionID (int transactionID) {
+		public Builder setTransactionID (String transactionID) {
 			this.transactionID = transactionID;
 			return this;
 		}
@@ -75,7 +75,7 @@ public final class Operation {
 		 * @param variableID
 		 * @return self
 		 */
-		public Builder setVariableID (int variableID) {
+		public Builder setVariableID (String variableID) {
 			if (this.opcode != Opcode.READ && this.opcode != Opcode.WRITE) {
 				throw new UnsupportedOperationException("Not a read or " +
 						"write operation");
@@ -112,7 +112,7 @@ public final class Operation {
 	 * Gets the ID of the transaction that requests the operation
 	 * @return The transaction ID
 	 */
-	public int getTransactionID () { return transactionID; }
+	public String getTransactionID () { return transactionID; }
 	
 	/**
 	 * Gets the opcode to check whether this operation is a begin, 
@@ -126,7 +126,7 @@ public final class Operation {
 	 * operation is asked to act on
 	 * @return The variable ID
 	 */
-	public int getVariableID () {
+	public String getVariableID () {
 		if (this.opcode != Opcode.READ && this.opcode != Opcode.WRITE) {
 			throw new UnsupportedOperationException("Not a read or " +
 					"write operation");

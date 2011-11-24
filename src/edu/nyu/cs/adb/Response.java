@@ -7,7 +7,7 @@ package edu.nyu.cs.adb;
  */
 public final class Response {
 	private final int siteID;
-	private final int transactionID;
+	private final String transactionID;
 	private final Status status;
 	private final int readValue;
 	
@@ -45,7 +45,7 @@ public final class Response {
 	 */
 	public static class Builder {
 		private final int siteID;
-		private int transactionID;
+		private String transactionID;
 		private final Status status;
 		private int readValue;
 		
@@ -57,7 +57,7 @@ public final class Response {
 		public Builder (int siteId, Status status) {
 			this.siteID = siteId;
 			this.status = status;
-			this.transactionID = 0;
+			this.transactionID = "";
 			this.readValue = 0;
 		}
 		
@@ -66,7 +66,7 @@ public final class Response {
 		 * @param transactionID
 		 * @return self
 		 */
-		public Builder setTransactionID (int transactionID) {
+		public Builder setTransactionID (String transactionID) {
 			this.transactionID = transactionID;
 			return this;
 		}
@@ -104,7 +104,7 @@ public final class Response {
 	 * Reads which transaction the site is referring to
 	 * @return The transaction ID
 	 */
-	public int getTransactionID () { return transactionID; }
+	public String getTransactionID () { return transactionID; }
 	
 	/**
 	 * Reads the status of the transaction
