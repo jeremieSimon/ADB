@@ -205,16 +205,6 @@ public final class DataManager {
 								+ transactionID + " already started");
 					}
 					
-					// Create before image
-					Map<String, Integer> beforeImage 
-						= new HashMap<String, Integer>();
-					Set<String> variableIDs = unstableStorage.keySet();
-					for (String variableID : variableIDs) {
-						int value = unstableStorage.get(variableID);
-						beforeImage.put(variableID, value);
-					}
-					beforeImages.put(transactionID, beforeImage);
-					
 					// Safely add transaction
 					readWriteTransactions.add(transactionID);
 					break;
@@ -254,8 +244,21 @@ public final class DataManager {
 				}
 				case WRITE:
 				{
+					String transactionID = operation.getTransactionID();
 					// TODO
 					// Ask for write lock
+					
+					// If this is the first write, create before image
+					if (!beforeImages.containsKey(transactionID)) {
+						Map<String, Integer> beforeImage 
+							= new HashMap<String, Integer>();
+						Set<String> variableIDs = unstableStorage.keySet();
+						for (String variableID : variableIDs) {
+							int value = unstableStorage.get(variableID);
+							beforeImage.put(variableID, value);
+						}
+						beforeImages.put(transactionID, beforeImage);
+					}
 					break;
 				}
 			}
