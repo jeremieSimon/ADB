@@ -398,9 +398,50 @@ public final class DataManager {
 				}
 				case FINISH:
 				{
-					// TODO
-					// Commit value you had a lock on
-					// Remove the lock
+					String transactionID = operation.getTransactionID();
+					
+					// Check if the transaction is active
+					if (!readOnlyTransactions.contains(transactionID) 
+						&& !readWriteTransactions.contains(transactionID)) {
+						throw new AssertionError(
+								transactionID + " not active");
+					}
+					
+					// Release read locks
+					Iterator<Lock> rit = readLocks.iterator();
+					while (rit.hasNext()) {
+						Lock lock = rit.next();
+						if (transactionID.equals(lock.getTransactionID())) {
+							rit.remove();
+						}
+					}
+					
+					// Release write locks, commit their values
+					Iterator<Lock> wit = readLocks.iterator();
+					while (wit.hasNext()) {
+						Lock lock = wit.next();
+						if (transactionID.equals(lock.getTransactionID())) {
+							String variableID = lock.variableID;
+							Integer value = unstableStorage.get(variableID);
+							CommittedValue commit = 
+								new CommittedValue(value, currentTime);
+							List<CommittedValue> history = 
+								stableStorage.get(variableID);
+							// Add new value to the head of the list
+							history.add(0, commit);
+							wit.remove();
+						}
+					}
+					
+					// Discard the before image
+					beforeImages.remove(transactionID);
+					
+					// Send success message back to the transaction manager
+					Response.Builder responseBuilder = 
+						new Response.Builder(siteID, Status.SUCCESS);
+					responseBuilder.setTransactionID(transactionID);
+					Response success = responseBuilder.build();
+					transactionManager.sendResponse(success);
 					break;
 				}
 				case READ:
