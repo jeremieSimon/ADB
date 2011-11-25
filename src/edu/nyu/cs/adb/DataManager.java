@@ -2,6 +2,7 @@ package edu.nyu.cs.adb;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -297,7 +298,51 @@ public final class DataManager {
 			switch (operation.getOperationID()) {
 				case ABORT:
 				{
-					// TODO
+					String transactionID = operation.getTransactionID();
+					
+					// Check if the transaction is active
+					if (!readOnlyTransactions.contains(transactionID) 
+						&& !readWriteTransactions.contains(transactionID)) {
+						throw new AssertionError(
+								transactionID + " not active");
+					}
+					
+					// Release read locks
+					Iterator<Lock> rit = readLocks.iterator();
+					while (rit.hasNext()) {
+						Lock lock = rit.next();
+						if (transactionID.equals(lock.getTransactionID())) {
+							rit.remove();
+						}
+					}
+					
+					// Release write locks
+					Iterator<Lock> wit = readLocks.iterator();
+					while (wit.hasNext()) {
+						Lock lock = wit.next();
+						if (transactionID.equals(lock.getTransactionID())) {
+							wit.remove();
+						}
+					}
+					
+					// Apply before image to the database
+					Map<String, Integer> beforeImage 
+						= beforeImages.get(transactionID);
+					Set<String> variableIDs = beforeImage.keySet();
+					for (String variableID : variableIDs) {
+						unstableStorage.put(variableID, 
+								beforeImage.get(variableID));
+					}
+					
+					// Discard the before image
+					beforeImages.remove(transactionID);
+					
+					// Send success message back to the transaction manager
+					Response.Builder responseBuilder = 
+						new Response.Builder(siteID, Status.SUCCESS);
+					responseBuilder.setTransactionID(transactionID);
+					Response success = responseBuilder.build();
+					transactionManager.sendResponse(success);
 					break;
 				}
 				case BEGIN:
