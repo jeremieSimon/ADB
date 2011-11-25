@@ -1,6 +1,7 @@
 package edu.nyu.cs.adb;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -56,11 +57,46 @@ public final class DataManager {
 		private int getStartTime () {
 			return startTime;
 		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + startTime;
+			result = prime * result
+					+ ((transactionID == null) ? 0 : transactionID.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			ReadOnlyTransaction other = (ReadOnlyTransaction) obj;
+			if (startTime != other.startTime)
+				return false;
+			if (transactionID == null) {
+				if (other.transactionID != null)
+					return false;
+			} else if (!transactionID.equals(other.transactionID))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "Read-Only Transaction " + transactionID
+					+ " started at time " + startTime;
+		}
 	}
-	private List<ReadOnlyTransaction> readOnlyTransactions 
-		= new LinkedList<ReadOnlyTransaction>();
+	private Set<ReadOnlyTransaction> readOnlyTransactions 
+		= new HashSet<ReadOnlyTransaction>();
 	
-	private List<String> readWriteTransactions = new LinkedList<String>();
+	private Set<String> readWriteTransactions = new HashSet<String>();
 	
 	/**
 	 * Lock information
@@ -95,9 +131,47 @@ public final class DataManager {
 		private String getVariableID () {
 			return variableID;
 		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ ((transactionID == null) ? 0 : transactionID.hashCode());
+			result = prime * result
+					+ ((variableID == null) ? 0 : variableID.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Lock other = (Lock) obj;
+			if (transactionID == null) {
+				if (other.transactionID != null)
+					return false;
+			} else if (!transactionID.equals(other.transactionID))
+				return false;
+			if (variableID == null) {
+				if (other.variableID != null)
+					return false;
+			} else if (!variableID.equals(other.variableID))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "Lock on " + variableID + " granted to " + transactionID;
+		}
 	}
-	private List<Lock> readLocks = new LinkedList<Lock>();
-	private List<Lock> writeLocks = new LinkedList<Lock>();
+	private Set<Lock> readLocks = new HashSet<Lock>();
+	private Set<Lock> writeLocks = new HashSet<Lock>();
 
 	private Map<String, Map<String, Integer>> beforeImages 
 		= new HashMap<String, Map<String, Integer>>();	
@@ -162,6 +236,37 @@ public final class DataManager {
 		 */
 		private int getTimestamp () {
 			return timestamp;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + timestamp;
+			result = prime * result + value;
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			CommittedValue other = (CommittedValue) obj;
+			if (timestamp != other.timestamp)
+				return false;
+			if (value != other.value)
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "CommittedValue [value=" + value + ", timestamp="
+					+ timestamp + "]";
 		}
 	}
 	
@@ -320,5 +425,10 @@ public final class DataManager {
 			return sb.toString();
 		}
 		else return "";
+	}
+
+	@Override
+	public String toString() {
+		return "DataManager [siteID=" + siteID + "]";
 	}
 }

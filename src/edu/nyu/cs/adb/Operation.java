@@ -146,4 +146,50 @@ public final class Operation {
 		}
 		return writeValue;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((opcode == null) ? 0 : opcode.hashCode());
+		result = prime * result
+				+ ((transactionID == null) ? 0 : transactionID.hashCode());
+		result = prime * result
+				+ ((variableID == null) ? 0 : variableID.hashCode());
+		result = prime * result + writeValue;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Operation other = (Operation) obj;
+		if (opcode != other.opcode)
+			return false;
+		if (transactionID == null) {
+			if (other.transactionID != null)
+				return false;
+		} else if (!transactionID.equals(other.transactionID))
+			return false;
+		if (variableID == null) {
+			if (other.variableID != null)
+				return false;
+		} else if (!variableID.equals(other.variableID))
+			return false;
+		if (writeValue != other.writeValue)
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Operation [transactionID=" + transactionID + ", opcode="
+				+ opcode + ", variableID=" + variableID + ", writeValue="
+				+ writeValue + "]";
+	}
 }

@@ -123,4 +123,46 @@ public final class Response {
 		}
 		return readValue;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + readValue;
+		result = prime * result + siteID;
+		result = prime * result + ((status == null) ? 0 : status.hashCode());
+		result = prime * result
+				+ ((transactionID == null) ? 0 : transactionID.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Response other = (Response) obj;
+		if (readValue != other.readValue)
+			return false;
+		if (siteID != other.siteID)
+			return false;
+		if (status != other.status)
+			return false;
+		if (transactionID == null) {
+			if (other.transactionID != null)
+				return false;
+		} else if (!transactionID.equals(other.transactionID))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Response [siteID=" + siteID + ", transactionID="
+				+ transactionID + ", status=" + status + ", readValue="
+				+ readValue + "]";
+	}
 }
