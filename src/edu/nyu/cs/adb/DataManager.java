@@ -14,6 +14,7 @@ import java.util.Set;
  * @author dandelarosa
  */
 public final class DataManager {
+	private final TransactionManager transactionManager;
 	private final int siteID;
 	private int currentTime = 0;
 	private boolean isActive = true;
@@ -182,7 +183,8 @@ public final class DataManager {
 	 * project.
 	 * @param siteID
 	 */
-	DataManager (int siteID) {
+	DataManager (TransactionManager transactionManager, int siteID) {
+		this.transactionManager = transactionManager;
 		this.siteID = siteID;
 		
 		// Even indexed variables are at all sites

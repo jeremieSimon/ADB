@@ -113,7 +113,7 @@ public final class TransactionManager {
 	private void init () {
 		// Make data managers
 		for (int siteID = 1; siteID <= 20; siteID++) {
-			dataManagers.add(new DataManager(siteID));
+			dataManagers.add(new DataManager(this, siteID));
 		}
 	}
 	
