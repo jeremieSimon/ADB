@@ -21,7 +21,8 @@ import java.util.List;
  */
 public final class TransactionManager {
 	// Our data managers
-	List<DataManager> dataManagers = new ArrayList<DataManager>();
+	private final List<DataManager> dataManagers = 
+		new ArrayList<DataManager>();
 	
 	// TODO declare member variables here...
 	private final BufferedReader input;
