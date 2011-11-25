@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The representation of a database site: contains a map for stored variable 
@@ -186,32 +187,77 @@ public final class DataManager {
 		for (Operation operation : currentMessage) {
 			switch (operation.getOperationID()) {
 				case ABORT:
+				{
 					// TODO
 					break;
+				}
 				case BEGIN:
-					// TODO
-					// TODO add to read/write transactions
-					// Also: error checking
+				{
+					String transactionID = operation.getTransactionID();
+					
+					// Throw an exception if the transaction already started
+					if (readWriteTransactions.contains(transactionID)) {
+						throw new IllegalStateException("Transaction " 
+								+ transactionID + " already started");
+					}
+					if (readOnlyTransactions.contains(transactionID)) {
+						throw new IllegalStateException("Transaction " 
+								+ transactionID + " already started");
+					}
+					
+					// Create before image
+					Map<String, Integer> beforeImage 
+						= new HashMap<String, Integer>();
+					Set<String> variableIDs = unstableStorage.keySet();
+					for (String variableID : variableIDs) {
+						int value = unstableStorage.get(variableID);
+						beforeImage.put(variableID, value);
+					}
+					beforeImages.put(transactionID, beforeImage);
+					
+					// Safely add transaction
+					readWriteTransactions.add(transactionID);
 					break;
+				}
 				case BEGIN_READONLY:
-					// TODO
-					// TODO add to read-only transactions
-					// Also: error checking
+				{
+					String transactionID = operation.getTransactionID();
+					
+					// Throw an exception if the transaction already started
+					if (readWriteTransactions.contains(transactionID)) {
+						throw new IllegalStateException("Transaction " 
+								+ transactionID + " already started");
+					}
+					if (readOnlyTransactions.contains(transactionID)) {
+						throw new IllegalStateException("Transaction " 
+								+ transactionID + " already started");
+					}
+					
+					// Safely add transaction
+					readOnlyTransactions.add(
+						new ReadOnlyTransaction(transactionID, currentTime));
 					break;
+				}
 				case FINISH:
+				{
 					// TODO
 					// Commit value you had a lock on
 					// Remove the lock
 					break;
+				}
 				case READ:
+				{
 					// TODO
 					// IF RO read from stable storage history
 					// IF RW ask for read lock
 					break;
+				}
 				case WRITE:
+				{
 					// TODO
 					// Ask for write lock
 					break;
+				}
 			}
 		}
 		currentTime++;
