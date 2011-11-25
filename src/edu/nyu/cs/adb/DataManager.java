@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.nyu.cs.adb.Response.Status;
+
 /**
  * The representation of a database site: contains a map for stored variable 
  * values as well as  lock data for its own site to see which transactions 
@@ -314,6 +316,13 @@ public final class DataManager {
 					
 					// Safely add transaction
 					readWriteTransactions.add(transactionID);
+					
+					// Send success message back to the transaction manager
+					Response.Builder responseBuilder = 
+						new Response.Builder(siteID, Status.SUCCESS);
+					responseBuilder.setTransactionID(transactionID);
+					Response success = responseBuilder.build();
+					transactionManager.sendResponse(success);
 					break;
 				}
 				case BEGIN_READONLY:
@@ -333,6 +342,13 @@ public final class DataManager {
 					// Safely add transaction
 					readOnlyTransactions.add(
 						new ReadOnlyTransaction(transactionID, currentTime));
+					
+					// Send success message back to the transaction manager
+					Response.Builder responseBuilder = 
+						new Response.Builder(siteID, Status.SUCCESS);
+					responseBuilder.setTransactionID(transactionID);
+					Response success = responseBuilder.build();
+					transactionManager.sendResponse(success);
 					break;
 				}
 				case FINISH:
