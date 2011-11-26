@@ -20,6 +20,7 @@ public final class DataManager {
 	private final TransactionManager transactionManager;
 	private final int siteID;
 	private int currentTime = 0;
+	private int lastRecoveryTime = 0;
 	private boolean isActive = true;
 	
 	private Message currentMessage = null;
@@ -294,7 +295,9 @@ public final class DataManager {
 	 * @param message The message object
 	 */
 	void sendMessage (Message message) {
-		currentMessage = message;
+		if (isActive) {
+			currentMessage = message;
+		}
 	}
 	
 	/**
@@ -624,16 +627,28 @@ public final class DataManager {
 	 * this site until this site recovers.
 	 */
 	void fail () {
-		// TODO
 		isActive = false;
+		
+		// Clear locks and unstable storage
+		readLocks.clear();
+		writeLocks.clear();
+		unstableStorage.clear();
 	}
 	
 	/**
 	 * Tells the site to recover
 	 */
 	void recover () {
-		// TODO
 		isActive = true;
+		lastRecoveryTime = currentTime;
+	}
+	
+	/**
+	 * Gets the time when the site last recovered
+	 * @return
+	 */
+	int getLastRecoveryTime () {
+		return lastRecoveryTime;
 	}
 	
 	/**
