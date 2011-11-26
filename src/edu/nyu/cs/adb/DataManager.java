@@ -174,8 +174,14 @@ public final class DataManager {
 			return "Lock on " + variableID + " granted to " + transactionID;
 		}
 	}
-	private Set<Lock> readLocks = new HashSet<Lock>();
-	private Set<Lock> writeLocks = new HashSet<Lock>();
+	private List<Lock> readLocks = new LinkedList<Lock>();
+	
+	// For Write locks:
+	// Key is the VariableID
+	// Value is the TransactionID
+	// Use a Map since only one transaction can have a lock on a variable
+	// at a time
+	private Map<String, String> writeLocks = new HashMap<String, String>();
 
 	private Map<String, Map<String, Integer>> beforeImages 
 		= new HashMap<String, Map<String, Integer>>();	
@@ -192,19 +198,27 @@ public final class DataManager {
 		
 		// Even indexed variables are at all sites
 		for (int i = 2; i <= 20; i += 2) {
+			String variableID = "x" + i;
+			int value = 10 * i;
 			stableStorage.put(
-					"x" + i, new LinkedList<CommittedValue>());
-			stableStorage.get("x" + i)
-				.add(new CommittedValue(10 * i, currentTime));
+					variableID, new LinkedList<CommittedValue>());
+			stableStorage.get(variableID)
+				.add(new CommittedValue(value, currentTime));
+			// Don't forget to initialize unstable storage too
+			unstableStorage.put(variableID, value);
 		}
 		
 		// Odd indexed variables are at one site each (1 + index mod 10)
 		for (int i = 1; i < 20; i +=2) {
 			if (siteID == 1 + (i % 10)) {
+				String variableID = "x" + i;
+				int value = 10 * i;
 				stableStorage.put(
-					"x" + i, new LinkedList<CommittedValue>());
-				stableStorage.get("x" + i)
-					.add(new CommittedValue(10 * i, currentTime));
+					variableID, new LinkedList<CommittedValue>());
+				stableStorage.get(variableID)
+					.add(new CommittedValue(value, currentTime));
+				// Don't forget to initialize unstable storage too
+				unstableStorage.put(variableID, value);
 			}
 		}
 	}
@@ -309,26 +323,26 @@ public final class DataManager {
 					
 					// Release read locks
 					Iterator<Lock> rit = readLocks.iterator();
-					while (rit.hasNext()) {
-						Lock lock = rit.next();
-						if (transactionID.equals(lock.getTransactionID())) {
-							rit.remove();
-						}
+                    while (rit.hasNext()) {
+                    	Lock lock = rit.next();
+                    	if (transactionID.equals(lock.getTransactionID())) {
+                    		rit.remove();
+                    	}
 					}
 					
 					// Release write locks
-					Iterator<Lock> wit = readLocks.iterator();
-					while (wit.hasNext()) {
-						Lock lock = wit.next();
-						if (transactionID.equals(lock.getTransactionID())) {
-							wit.remove();
+					Set<String> variableIDs = 
+						new HashSet<String>(writeLocks.keySet());
+					for (String variableID : variableIDs) {
+						if (writeLocks.get(variableID).equals(transactionID)) {
+							writeLocks.remove(variableID);
 						}
 					}
 					
 					// Apply before image to the database
 					Map<String, Integer> beforeImage 
 						= beforeImages.get(transactionID);
-					Set<String> variableIDs = beforeImage.keySet();
+					variableIDs = beforeImage.keySet();
 					for (String variableID : variableIDs) {
 						unstableStorage.put(variableID, 
 								beforeImage.get(variableID));
@@ -409,19 +423,18 @@ public final class DataManager {
 					
 					// Release read locks
 					Iterator<Lock> rit = readLocks.iterator();
-					while (rit.hasNext()) {
-						Lock lock = rit.next();
-						if (transactionID.equals(lock.getTransactionID())) {
-							rit.remove();
-						}
+                    while (rit.hasNext()) {
+                    	Lock lock = rit.next();
+                    	if (transactionID.equals(lock.getTransactionID())) {
+                    		rit.remove();
+                    	}
 					}
 					
 					// Release write locks, commit their values
-					Iterator<Lock> wit = readLocks.iterator();
-					while (wit.hasNext()) {
-						Lock lock = wit.next();
-						if (transactionID.equals(lock.getTransactionID())) {
-							String variableID = lock.variableID;
+					Set<String> variableIDs = 
+						new HashSet<String>(writeLocks.keySet());
+					for (String variableID : variableIDs) {
+						if (writeLocks.get(variableID).equals(transactionID)) {
 							Integer value = unstableStorage.get(variableID);
 							CommittedValue commit = 
 								new CommittedValue(value, currentTime);
@@ -429,7 +442,7 @@ public final class DataManager {
 								stableStorage.get(variableID);
 							// Add new value to the head of the list
 							history.add(0, commit);
-							wit.remove();
+							writeLocks.remove(variableID);
 						}
 					}
 					
@@ -446,9 +459,85 @@ public final class DataManager {
 				}
 				case READ:
 				{
-					// TODO
-					// IF RO read from stable storage history
-					// IF RW ask for read lock
+					String transactionID = operation.getTransactionID();
+					String variableID = operation.getVariableID();
+					
+					// Fail if variable is not written in unstable storage
+					if (!unstableStorage.containsKey(variableID)) {
+						// Create and send failure response
+						Response.Builder responseBuilder = 
+							new Response.Builder(siteID, Status.FAILURE);
+						responseBuilder.setTransactionID(transactionID);
+						Response failure = responseBuilder.build();
+						transactionManager.sendResponse(failure);
+						// Don't do anything else with this operation
+						break;
+					}
+					
+					// Check if the transaction is active
+					if (!readOnlyTransactions.contains(transactionID) 
+						&& !readWriteTransactions.contains(transactionID)) {
+						throw new AssertionError(
+								transactionID + " not active");
+					}
+					
+					// If RO read from stable storage history
+					if (readOnlyTransactions.contains(transactionID)) {
+						List<CommittedValue> history = 
+							stableStorage.get(variableID);
+						for (CommittedValue committedValue : history) {
+							if (committedValue.getTimestamp() <= currentTime) {
+								// Create and send response
+								int value = committedValue.getValue();
+								Response.Builder builder = 
+									new Response.Builder(siteID, 
+										Status.SUCCESS);
+								builder.setTransactionID(transactionID);
+								builder.setReadValue(value);
+								Response success = builder.build();
+								transactionManager.sendResponse(success);
+								// Ignore the remaining history
+								break;
+							}
+						}
+						// Don't do anything else for this transaction
+						break;
+					}
+					
+					// If RW ask for read lock
+					if (readWriteTransactions.contains(transactionID)) {
+						boolean isWriteLockOnVariable =
+							writeLocks.containsKey(variableID);
+						boolean doesTransactionHaveWriteLock = 
+							transactionID.equals(writeLocks.get(variableID));
+						if (!isWriteLockOnVariable || 
+								doesTransactionHaveWriteLock) {
+							// Lock the variable
+							Lock readLock = new Lock(transactionID, variableID);
+							readLocks.add(readLock);
+							// Send back the read value
+							Integer readValue = unstableStorage.get(variableID);
+							Response.Builder builder = 
+								new Response.Builder(siteID, Status.SUCCESS);
+							builder.setTransactionID(transactionID);
+							builder.setReadValue(readValue);
+							Response readSuccess = builder.build();
+							transactionManager.sendResponse(readSuccess);
+							// Don't do anything else with this operation
+							break;
+						}
+						else {
+							// Tell the Transaction Manager that the 
+							// variable is locked
+							Response.Builder builder = 
+								new Response.Builder(siteID, Status.LOCKED);
+							builder.setTransactionID(transactionID);
+							Response locked = builder.build();
+							transactionManager.sendResponse(locked);
+							// Don't do anything else with this operation
+							break;
+						}
+					}
 					break;
 				}
 				case WRITE:
