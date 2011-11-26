@@ -174,7 +174,7 @@ public final class DataManager {
 			return "Lock on " + variableID + " granted to " + transactionID;
 		}
 	}
-	private List<Lock> readLocks = new LinkedList<Lock>();
+	private Set<Lock> readLocks = new HashSet<Lock>();
 	
 	// For Write locks:
 	// Key is the VariableID
@@ -543,21 +543,75 @@ public final class DataManager {
 				case WRITE:
 				{
 					String transactionID = operation.getTransactionID();
-					// TODO
-					// Ask for write lock
+					String variableID = operation.getVariableID();
 					
-					// If this is the first write, create before image
-					if (!beforeImages.containsKey(transactionID)) {
-						Map<String, Integer> beforeImage 
-							= new HashMap<String, Integer>();
-						Set<String> variableIDs = unstableStorage.keySet();
-						for (String variableID : variableIDs) {
-							int value = unstableStorage.get(variableID);
-							beforeImage.put(variableID, value);
+					boolean isReadLocked = false;
+					// See if there are any read locks
+					for (Lock lock : readLocks) {
+						if (lock.getVariableID().equals(variableID)) {
+							// Tell the Transaction Manager that the 
+							// variable is locked
+							Response.Builder builder = 
+								new Response.Builder(siteID, Status.LOCKED);
+							builder.setTransactionID(transactionID);
+							Response locked = builder.build();
+							transactionManager.sendResponse(locked);
+							
+							isReadLocked = true;
+							break;
 						}
-						beforeImages.put(transactionID, beforeImage);
 					}
-					break;
+					// If locked, don't do anything else with this operation
+					if (isReadLocked) break;
+					
+					// Ask for write lock
+					boolean isWriteLockOnVariable =
+						writeLocks.containsKey(variableID);
+					boolean doesTransactionHaveWriteLock = 
+						transactionID.equals(writeLocks.get(variableID));
+					if (!isWriteLockOnVariable || 
+							doesTransactionHaveWriteLock) {
+						// Lock the variable
+						writeLocks.put(variableID, transactionID);
+						Integer writeValue = operation.getWriteValue();
+						
+						// If this is the first write, create before image
+						if (!beforeImages.containsKey(transactionID)) {
+							Map<String, Integer> beforeImage 
+								= new HashMap<String, Integer>();
+							Set<String> variableIDs = unstableStorage.keySet();
+							for (String variable : variableIDs) {
+								int value = unstableStorage.get(variable);
+								beforeImage.put(variable, value);
+							}
+							beforeImages.put(transactionID, beforeImage);
+						}
+						
+						// Write to the variable
+						unstableStorage.put(variableID, writeValue);
+						
+						// Send success message
+						Response.Builder builder = 
+							new Response.Builder(siteID, Status.SUCCESS);
+						builder.setTransactionID(transactionID);
+						Response success = builder.build();
+						transactionManager.sendResponse(success);
+						
+						// Don't do anything else with this operation
+						break;
+					}
+					else {
+						// Tell the Transaction Manager that the 
+						// variable is locked
+						Response.Builder builder = 
+							new Response.Builder(siteID, Status.LOCKED);
+						builder.setTransactionID(transactionID);
+						Response locked = builder.build();
+						transactionManager.sendResponse(locked);
+						
+						// Don't do anything else with this operation
+						break;
+					}
 				}
 			}
 		}
