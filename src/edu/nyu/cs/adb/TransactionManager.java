@@ -161,6 +161,13 @@ public final class TransactionManager {
 					
 					// TODO implement the rest...
 					// if(opcode.equals())...
+					if (opcode.equals("dump")) {
+						// TODO handle case for dump(i)
+						// TODO handle case for dump(xj)
+						for (DataManager dm : dataManagers) {
+							System.out.print(dm.dump());
+						}
+					}
 				}
 				
 				// TODO implement the rest...
