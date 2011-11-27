@@ -132,6 +132,37 @@ public final class TransactionManager {
 			// Read the first line
 			String currentLine = input.readLine();
 			while (currentLine != null) {
+				// Ignore lines that start with "//"
+				if (currentLine.startsWith("//")) {
+					// Ignore this line and go to the next one
+					currentLine = input.readLine();
+					continue;
+				}
+				
+				// If there are multiple operations per line, each operation is
+				// separated by a semicolon and a space ("; ")
+				String [] operations = currentLine.split("; ");
+				for (String operation : operations) {
+					// In each operation, the opcode is before the parentheses 
+					// and the arguments are inside them
+					int lparen = operation.indexOf('(');
+					int rparen = operation.indexOf(')');
+					// Bug out if parenthesis aren't found
+					if (lparen == -1 || rparen == -1) {
+						throw new AssertionError("Input line " + currentLine 
+								+ " missing parenthesis on " + operation);
+					}
+					String opcode = operation.substring(0, lparen);
+					String arglist = operation.substring(lparen+1, rparen);
+					
+					// If there are multiple arguments, each is separated by a 
+					// comma
+					String [] args = arglist.split(",");
+					
+					// TODO implement the rest...
+					// if(opcode.equals())...
+				}
+				
 				// TODO implement the rest...
 				
 				// Sample Message generation code
@@ -144,6 +175,11 @@ public final class TransactionManager {
 				
 				
 				output.write(""); // temporary code So the compiler doesn't throw an exception...
+				
+				// Update the data sites
+				for (DataManager site : dataManagers) {
+					site.update();
+				}
 				
 				// Read the next line
 				currentLine = input.readLine();

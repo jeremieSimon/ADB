@@ -240,7 +240,7 @@ public final class DataManager {
 		if (!isActive) return;
 		
 		// Don't process any messages if there isn't any
-		if (currentMessage != null) return;
+		if (currentMessage == null) return;
 		
 		for (Operation operation : currentMessage) {
 			switch (operation.getOperationID()) {
@@ -559,6 +559,7 @@ public final class DataManager {
 				}
 			}
 		}
+		currentMessage = null;
 		currentTime++;
 	}
 	
