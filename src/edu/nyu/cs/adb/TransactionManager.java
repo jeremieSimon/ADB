@@ -162,11 +162,72 @@ public final class TransactionManager {
 					// TODO implement the rest...
 					// if(opcode.equals())...
 					if (opcode.equals("dump")) {
-						// TODO handle case for dump(i)
-						// TODO handle case for dump(xj)
-						for (DataManager dm : dataManagers) {
+						String arg = args[0];
+						// If there are no arguments, print out the committed 
+						// values of all variables at all sites, sorted per
+						// site.
+						if (arg.length() == 0) {
+							for (DataManager dm : dataManagers) {
+								System.out.print(dm.dump());
+							}
+						}
+						// dump(xj) gives the committed values of all copies of
+						// variable xj at all sites
+						else if (arg.startsWith("x")) {
+							String variableID = arg;
+							for (DataManager dm : dataManagers) {
+								System.out.print(dm.dump(variableID));
+							}
+						}
+						// dump(i) gives the committed values of all copies of 
+						// all variables at site i
+						else {
+							Integer siteObject = Integer.parseInt(arg);
+							if (siteObject == null) {
+								throw new AssertionError(
+										"Incorrect format for " + operation);
+							}
+							int siteID = siteObject.intValue();
+							if (siteID <= 0 || siteID > dataManagers.size()) {
+								throw new AssertionError("Site " + siteID 
+										+ " does not exist");
+							}
+							// Remember that sites are zero-indexed
+							DataManager dm = dataManagers.get(siteID - 1);
 							System.out.print(dm.dump());
 						}
+					}
+					if (opcode.equals("fail")) {
+						String arg = args[0];
+						Integer siteObject = Integer.parseInt(arg);
+						if (siteObject == null) {
+							throw new AssertionError(
+									"Incorrect format for " + operation);
+						}
+						int siteID = siteObject.intValue();
+						if (siteID <= 0 || siteID > dataManagers.size()) {
+							throw new AssertionError("Site " + siteID 
+									+ " does not exist");
+						}
+						// Remember that sites are zero-indexed
+						DataManager dm = dataManagers.get(siteID - 1);
+						dm.fail();
+					}
+					if (opcode.equals("recover")) {
+						String arg = args[0];
+						Integer siteObject = Integer.parseInt(arg);
+						if (siteObject == null) {
+							throw new AssertionError(
+									"Incorrect format for " + operation);
+						}
+						int siteID = siteObject.intValue();
+						if (siteID <= 0 || siteID > dataManagers.size()) {
+							throw new AssertionError("Site " + siteID 
+									+ " does not exist");
+						}
+						// Remember that sites are zero-indexed
+						DataManager dm = dataManagers.get(siteID - 1);
+						dm.recover();
 					}
 				}
 				

@@ -626,6 +626,7 @@ public final class DataManager {
 			sb.append(siteID);
 			sb.append(": ");
 			sb.append(stableStorage.get(variableID).get(0).getValue());
+			sb.append("\n");
 			return sb.toString();
 		}
 		else return "";
