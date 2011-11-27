@@ -30,77 +30,8 @@ public final class DataManager {
 	private Map<String, Integer> unstableStorage 
 		= new HashMap<String, Integer>();
 	
-	/**
-	 * Data structure for a read-only transaction
-	 */
-	private static final class ReadOnlyTransaction {
-		private final String transactionID;
-		private final int startTime;
-		
-		/**
-		 * Constructor
-		 * @param transactionID
-		 * @param startTime
-		 */
-		private ReadOnlyTransaction (String transactionID, int startTime) {
-			this.transactionID = transactionID;
-			this.startTime = startTime;
-		}
-		
-		/**
-		 * Get the transaction ID
-		 * @return
-		 */
-		private String getTransactionID () {
-			return transactionID;
-		}
-		
-		/**
-		 * Get the time the transaction started
-		 * @return
-		 */
-		private int getStartTime () {
-			return startTime;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + startTime;
-			result = prime * result
-					+ ((transactionID == null) ? 0 : transactionID.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			ReadOnlyTransaction other = (ReadOnlyTransaction) obj;
-			if (startTime != other.startTime)
-				return false;
-			if (transactionID == null) {
-				if (other.transactionID != null)
-					return false;
-			} else if (!transactionID.equals(other.transactionID))
-				return false;
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			return "Read-Only Transaction " + transactionID
-					+ " started at time " + startTime;
-		}
-	}
-	private Set<ReadOnlyTransaction> readOnlyTransactions 
-		= new HashSet<ReadOnlyTransaction>();
-	
+	private Map<String, Integer> readOnlyTransactions 
+		= new HashMap<String, Integer>();
 	private Set<String> readWriteTransactions = new HashSet<String>();
 	
 	/**
@@ -318,8 +249,11 @@ public final class DataManager {
 					String transactionID = operation.getTransactionID();
 					
 					// Check if the transaction is active
-					if (!readOnlyTransactions.contains(transactionID) 
-						&& !readWriteTransactions.contains(transactionID)) {
+					boolean isReadOnly = 
+						readOnlyTransactions.containsKey(transactionID);
+					boolean isReadWrite = 
+						readWriteTransactions.contains(transactionID);
+					if (!isReadOnly && !isReadWrite) {
 						throw new AssertionError(
 								transactionID + " not active");
 					}
@@ -371,7 +305,7 @@ public final class DataManager {
 						throw new IllegalStateException("Transaction " 
 								+ transactionID + " already started");
 					}
-					if (readOnlyTransactions.contains(transactionID)) {
+					if (readOnlyTransactions.containsKey(transactionID)) {
 						throw new IllegalStateException("Transaction " 
 								+ transactionID + " already started");
 					}
@@ -396,14 +330,13 @@ public final class DataManager {
 						throw new IllegalStateException("Transaction " 
 								+ transactionID + " already started");
 					}
-					if (readOnlyTransactions.contains(transactionID)) {
+					if (readOnlyTransactions.containsKey(transactionID)) {
 						throw new IllegalStateException("Transaction " 
 								+ transactionID + " already started");
 					}
 					
 					// Safely add transaction
-					readOnlyTransactions.add(
-						new ReadOnlyTransaction(transactionID, currentTime));
+					readOnlyTransactions.put(transactionID, currentTime);
 					
 					// Send success message back to the transaction manager
 					Response.Builder responseBuilder = 
@@ -418,8 +351,11 @@ public final class DataManager {
 					String transactionID = operation.getTransactionID();
 					
 					// Check if the transaction is active
-					if (!readOnlyTransactions.contains(transactionID) 
-						&& !readWriteTransactions.contains(transactionID)) {
+					boolean isReadOnly = 
+						readOnlyTransactions.containsKey(transactionID);
+					boolean isReadWrite = 
+						readWriteTransactions.contains(transactionID);
+					if (!isReadOnly && !isReadWrite) {
 						throw new AssertionError(
 								transactionID + " not active");
 					}
@@ -478,18 +414,23 @@ public final class DataManager {
 					}
 					
 					// Check if the transaction is active
-					if (!readOnlyTransactions.contains(transactionID) 
-						&& !readWriteTransactions.contains(transactionID)) {
+					boolean isReadOnly = 
+						readOnlyTransactions.containsKey(transactionID);
+					boolean isReadWrite = 
+						readWriteTransactions.contains(transactionID);
+					if (!isReadOnly && !isReadWrite) {
 						throw new AssertionError(
 								transactionID + " not active");
 					}
 					
 					// If RO read from stable storage history
-					if (readOnlyTransactions.contains(transactionID)) {
+					if (readOnlyTransactions.containsKey(transactionID)) {
 						List<CommittedValue> history = 
 							stableStorage.get(variableID);
 						for (CommittedValue committedValue : history) {
-							if (committedValue.getTimestamp() <= currentTime) {
+							int startTime = 
+								readOnlyTransactions.get(transactionID);
+							if (committedValue.getTimestamp() <= startTime) {
 								// Create and send response
 								int value = committedValue.getValue();
 								Response.Builder builder = 
