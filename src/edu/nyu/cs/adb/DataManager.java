@@ -594,7 +594,7 @@ public final class DataManager {
 	}
 	
 	/**
-	 * Returns the entire database state for this site.
+	 * Returns the committed values at this site.
 	 * @return A string listing the variables and their value
 	 */
 	String dump () {
@@ -615,7 +615,7 @@ public final class DataManager {
 	}
 	
 	/**
-	 * Returns the value for variable xj at this site.
+	 * Returns the committed value for variable xj at this site.
 	 * @param xj The variable index
 	 * @return A string containing the value of the variable
 	 */
