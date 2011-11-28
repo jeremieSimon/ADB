@@ -137,8 +137,58 @@ public final class TransactionManager {
 					// comma
 					String [] args = arglist.split(",");
 					
-					// TODO implement the rest...
-					// if(opcode.equals())...
+					// begin(T1) says that T1 begins
+					if (opcode.equals("begin")) {
+						String transactionID = args[0];
+						Operation.Builder builder = 
+							new Operation.Builder(Opcode.BEGIN);
+						builder.setTransactionID(transactionID);
+						Operation begin = builder.build();
+						// TODO implement the rest
+					}
+					
+					// beginRO(T3) says that T3 is read-only
+					if (opcode.equals("beginRO")) {
+						String transactionID = args[0];
+						Operation.Builder builder = 
+							new Operation.Builder(Opcode.BEGIN_READONLY);
+						builder.setTransactionID(transactionID);
+						Operation beginRO = builder.build();
+						// TODO implement the rest
+					}
+					
+					// R(T1,x4) says transaction 1 wishes to read x4 (provided 
+					// it can get the locks or provided it doesn't need the 
+					// locks (if T1 is a read-only transaction)). It should 
+					// read any up (i.e. alive) copy and return the current 
+					// value.
+					if (opcode.equals("R")) {
+						String transactionID = args[0];
+						String variableID = args[1];
+						Operation.Builder builder = 
+							new Operation.Builder(Opcode.READ);
+						builder.setTransactionID(transactionID);
+						builder.setVariableID(variableID);
+						Operation read = builder.build();
+						// TODO implement the rest
+					}
+					
+					// W(T1,x6,v) says transaction 1 wishes to write all 
+					// available copies of x6 (provided it can get the locks) 
+					// with the value v.
+					if (opcode.equals("W")) {
+						String transactionID = args[0];
+						String variableID = args[1];
+						int writeValue = Integer.parseInt(args[2]);
+						Operation.Builder builder = 
+							new Operation.Builder(Opcode.WRITE);
+						builder.setTransactionID(transactionID);
+						builder.setVariableID(variableID);
+						builder.setWriteValue(writeValue);
+						Operation write = builder.build();
+						// TODO implement the rest
+					}
+					
 					// See below for specific cases for dump
 					if (opcode.equals("dump")) {
 						String arg = args[0];
@@ -161,12 +211,7 @@ public final class TransactionManager {
 						// dump(i) gives the committed values of all copies of 
 						// all variables at site i
 						else {
-							Integer siteObject = Integer.parseInt(arg);
-							if (siteObject == null) {
-								throw new AssertionError(
-										"Incorrect format for " + operation);
-							}
-							int siteID = siteObject.intValue();
+							int siteID = Integer.parseInt(arg);
 							if (siteID <= 0 || siteID > dataManagers.size()) {
 								throw new AssertionError("Site " + siteID 
 										+ " does not exist");
@@ -176,6 +221,7 @@ public final class TransactionManager {
 							output.print(dm.dump());
 						}
 					}
+					
 					// end(T1) causes your system to report whether T1 can 
 					// commit
 					if (opcode.equals("end")) {
@@ -186,17 +232,12 @@ public final class TransactionManager {
 						Operation endOperation = builder.build();
 						// TODO implement the rest
 					}
+					
 					// fail(6) says site 6 fails. (This is not issued by a 
 					// transaction, but is just an event that the tester will
 					// will execute.)
 					if (opcode.equals("fail")) {
-						String arg = args[0];
-						Integer siteObject = Integer.parseInt(arg);
-						if (siteObject == null) {
-							throw new AssertionError(
-									"Incorrect format for " + operation);
-						}
-						int siteID = siteObject.intValue();
+						int siteID = Integer.parseInt(args[0]);
 						if (siteID <= 0 || siteID > dataManagers.size()) {
 							throw new AssertionError("Site " + siteID 
 									+ " does not exist");
@@ -205,16 +246,11 @@ public final class TransactionManager {
 						DataManager dm = dataManagers.get(siteID - 1);
 						dm.fail();
 					}
+					
 					// recover(7) says site 7 recovers. (Again, a tester-caused
 					// event)
 					if (opcode.equals("recover")) {
-						String arg = args[0];
-						Integer siteObject = Integer.parseInt(arg);
-						if (siteObject == null) {
-							throw new AssertionError(
-									"Incorrect format for " + operation);
-						}
-						int siteID = siteObject.intValue();
+						int siteID = Integer.parseInt(args[0]);
 						if (siteID <= 0 || siteID > dataManagers.size()) {
 							throw new AssertionError("Site " + siteID 
 									+ " does not exist");
