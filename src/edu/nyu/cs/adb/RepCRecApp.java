@@ -1,8 +1,8 @@
 package edu.nyu.cs.adb;
 
+import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.PrintStream;
 
 /**
  * This is the object that has the main function
@@ -22,9 +22,10 @@ public final class RepCRecApp {
 			sim = new TransactionManager(System.in, System.out);
 		}
 		else if (args.length == 1) {
-			OutputStream out;
+			PrintStream out;
+			File outputFile = new File(args[0]);
 			try {
-				out = new FileOutputStream(args[0]);
+				out = new PrintStream(outputFile);
 			} catch (FileNotFoundException e) {
 				throw new IllegalArgumentException("Could not open file" 
 						+ args[0]);

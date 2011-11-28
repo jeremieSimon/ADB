@@ -1,18 +1,17 @@
 package edu.nyu.cs.adb;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import edu.nyu.cs.adb.Operation.Opcode;
 
 /**
  * This class will read the input and perform operations with the DataManager 
@@ -24,27 +23,9 @@ public final class TransactionManager {
 	private final List<DataManager> dataManagers = 
 		new ArrayList<DataManager>();
 	
-	// TODO declare member variables here...
 	private final BufferedReader input;
-	private final BufferedWriter output;
-	
-	// Operation Generators
-	private final Operation.Builder beginOperationBuilder = 
-		new Operation.Builder(Operation.Opcode.BEGIN);
-	private final Operation.Builder beginROOperationBuilder = 
-		new Operation.Builder(Operation.Opcode.BEGIN_READONLY);
-	private final Operation.Builder readOperationBuilder = 
-		new Operation.Builder(Operation.Opcode.READ);
-	private final Operation.Builder writeOperationBuilder = 
-		new Operation.Builder(Operation.Opcode.WRITE);
-	private final Operation.Builder finishOperationBuilder = 
-		new Operation.Builder(Operation.Opcode.FINISH);
-	private final Operation.Builder abortOperationBuilder = 
-		new Operation.Builder(Operation.Opcode.ABORT);
-	
-	// Message Generator
-	private final Message.Builder messageBuilder= new Message.Builder();
-	
+	private final PrintStream output;
+		
 	/**
 	 * This is the constructor, with additional functionality
 	 * <ol>
@@ -61,27 +42,25 @@ public final class TransactionManager {
 	 * read
 	 */
 	TransactionManager (String inname, String outname) {
+		// Set up reading mechanisms
 		File inputFile = new File(inname);
-		File outputFile = new File(outname);
 		InputStream in;
 		try {
 			in = new FileInputStream(inputFile);
 		} catch (FileNotFoundException e) {
 			throw new IllegalArgumentException("Could not open file" + inname);
 		}
-		OutputStream out;
+		InputStreamReader tempreader = new InputStreamReader(in);
+		this.input = new BufferedReader(tempreader);
+		
+		// Set up writing mechanisms
+		File outputFile = new File(outname);
 		try {
-			out = new FileOutputStream(outputFile);
+			this.output = new PrintStream(outputFile);
 		} catch (FileNotFoundException e) {
 			throw new IllegalArgumentException("Could not open file" 
 					+ outname);
 		}
-		
-		// Set up reading and writing mechanisms
-		InputStreamReader tempreader = new InputStreamReader(in);
-		this.input = new BufferedReader(tempreader);
-		OutputStreamWriter tempwriter = new OutputStreamWriter(out);
-		this.output = new BufferedWriter(tempwriter);
 		
 		this.init();
 	}
@@ -99,12 +78,11 @@ public final class TransactionManager {
 	 * @param in the input stream
 	 * @param out the output stream
 	 */
-	TransactionManager (InputStream in, OutputStream out) {
+	TransactionManager (InputStream in, PrintStream out) {
 		// Set up reading and writing mechanisms
 		InputStreamReader tempreader = new InputStreamReader(in);
 		this.input = new BufferedReader(tempreader);
-		OutputStreamWriter tempwriter = new OutputStreamWriter(out);
-		this.output = new BufferedWriter(tempwriter);
+		this.output = out;
 		this.init();
 	}
 	
@@ -161,6 +139,7 @@ public final class TransactionManager {
 					
 					// TODO implement the rest...
 					// if(opcode.equals())...
+					// See below for specific cases for dump
 					if (opcode.equals("dump")) {
 						String arg = args[0];
 						// If there are no arguments, print out the committed 
@@ -168,7 +147,7 @@ public final class TransactionManager {
 						// site.
 						if (arg.length() == 0) {
 							for (DataManager dm : dataManagers) {
-								System.out.print(dm.dump());
+								output.print(dm.dump());
 							}
 						}
 						// dump(xj) gives the committed values of all copies of
@@ -176,7 +155,7 @@ public final class TransactionManager {
 						else if (arg.startsWith("x")) {
 							String variableID = arg;
 							for (DataManager dm : dataManagers) {
-								System.out.print(dm.dump(variableID));
+								output.print(dm.dump(variableID));
 							}
 						}
 						// dump(i) gives the committed values of all copies of 
@@ -194,9 +173,22 @@ public final class TransactionManager {
 							}
 							// Remember that sites are zero-indexed
 							DataManager dm = dataManagers.get(siteID - 1);
-							System.out.print(dm.dump());
+							output.print(dm.dump());
 						}
 					}
+					// end(T1) causes your system to report whether T1 can 
+					// commit
+					if (opcode.equals("end")) {
+						String transactionID = args[0];
+						Operation.Builder builder = 
+							new Operation.Builder(Opcode.FINISH);
+						builder.setTransactionID(transactionID);
+						Operation endOperation = builder.build();
+						// TODO implement the rest
+					}
+					// fail(6) says site 6 fails. (This is not issued by a 
+					// transaction, but is just an event that the tester will
+					// will execute.)
 					if (opcode.equals("fail")) {
 						String arg = args[0];
 						Integer siteObject = Integer.parseInt(arg);
@@ -213,6 +205,8 @@ public final class TransactionManager {
 						DataManager dm = dataManagers.get(siteID - 1);
 						dm.fail();
 					}
+					// recover(7) says site 7 recovers. (Again, a tester-caused
+					// event)
 					if (opcode.equals("recover")) {
 						String arg = args[0];
 						Integer siteObject = Integer.parseInt(arg);
@@ -232,17 +226,18 @@ public final class TransactionManager {
 				}
 				
 				// TODO implement the rest...
+				// Now that the input has been processed, send messages
 				
 				// Sample Message generation code
-				messageBuilder.clear();
+				Operation.Builder beginOperationBuilder = 
+					new Operation.Builder(Opcode.BEGIN);
 				beginOperationBuilder.setTransactionID("T1");
 				Operation beginT1 = 
 					beginOperationBuilder.build();
+				
+				Message.Builder messageBuilder = new Message.Builder();
 				messageBuilder.addOperation(beginT1);
 				Message message = messageBuilder.build();
-				
-				
-				output.write(""); // temporary code So the compiler doesn't throw an exception...
 				
 				// Update the data sites
 				for (DataManager site : dataManagers) {
