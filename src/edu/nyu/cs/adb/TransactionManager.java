@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import edu.nyu.cs.adb.Operation.Opcode;
@@ -25,6 +26,8 @@ public final class TransactionManager {
 	
 	private final BufferedReader input;
 	private final PrintStream output;
+	private HashMap <String, ArrayList<Integer>> variableMap;
+	private HashMap <String, Transaction> transactionMap; 
 		
 	/**
 	 * This is the constructor, with additional functionality
@@ -83,7 +86,11 @@ public final class TransactionManager {
 		InputStreamReader tempreader = new InputStreamReader(in);
 		this.input = new BufferedReader(tempreader);
 		this.output = out;
+		
+		variableMap = createVariableMap(); 
+		transactionMap =  new HashMap <String, Transaction>(); 
 		this.init();
+		
 	}
 	
 	/**
@@ -139,7 +146,11 @@ public final class TransactionManager {
 					
 					// begin(T1) says that T1 begins
 					if (opcode.equals("begin")) {
+
 						String transactionID = args[0];
+						//create a new instance of transaction: 
+						transactionMap.put(transactionID, new Transaction(variableMap, transactionID));
+						
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.BEGIN);
 						builder.setTransactionID(transactionID);
@@ -150,6 +161,10 @@ public final class TransactionManager {
 					// beginRO(T3) says that T3 is read-only
 					if (opcode.equals("beginRO")) {
 						String transactionID = args[0];
+						
+						//create a new instance of transaction: 
+						transactionMap.put(transactionID, new Transaction(variableMap, transactionID));
+						
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.BEGIN_READONLY);
 						builder.setTransactionID(transactionID);
@@ -226,6 +241,10 @@ public final class TransactionManager {
 					// commit
 					if (opcode.equals("end")) {
 						String transactionID = args[0];
+						
+						//Remove the transaction from transactions
+						transactionMap.remove(transactionID);
+						
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.FINISH);
 						builder.setTransactionID(transactionID);
@@ -237,7 +256,21 @@ public final class TransactionManager {
 					// transaction, but is just an event that the tester will
 					// will execute.)
 					if (opcode.equals("fail")) {
+						
 						int siteID = Integer.parseInt(args[0]);
+						
+						//call siteFailure for transaction concerned
+						for (Transaction t: transactionMap.values()){
+							ArrayList <Integer> sites = t.getSites();
+							for (int site: sites){
+								if (site == siteID){
+									t.siteFailure(siteID);
+								}
+							}
+						}
+						
+						
+						
 						if (siteID <= 0 || siteID > dataManagers.size()) {
 							throw new AssertionError("Site " + siteID 
 									+ " does not exist");
@@ -259,6 +292,8 @@ public final class TransactionManager {
 						DataManager dm = dataManagers.get(siteID - 1);
 						dm.recover();
 					}
+					
+					//At the end of each cycle, update the TransactionMap
 				}
 				
 				// TODO implement the rest...
@@ -289,6 +324,40 @@ public final class TransactionManager {
 		}
 	}
 	
+	
+	
+	
+	/**
+	 * Create a variable map, that is a map where each key is a variable and 
+	 * the value is an array list where each element is a site
+	 * @return
+	 */
+	private HashMap <String, ArrayList<Integer>> createVariableMap(){
+		
+		int NUMBER_OF_SITES = 10; 
+		HashMap<String, ArrayList <Integer>> variableMap = new HashMap<String, ArrayList <Integer>>();
+
+		ArrayList <Integer> sites = new ArrayList<Integer> (); 
+		for (int i=0; i<NUMBER_OF_SITES; i++){
+			sites.add(i);
+		}
+		
+		for (int i=1; i<20; i++){
+			if (i%2 == 0){
+			variableMap.put("x"+i, sites);
+			}
+			else{
+				ArrayList <Integer> A = new ArrayList<Integer>(); 
+				A.add(((1+i)%10)); 
+				variableMap.put("x"+i, A);
+				}
+		}
+		return variableMap; 
+	}
+	
+
+	
+
 	/**
 	 * Send a response to the Transaction Manager. This intended to be called 
 	 * after a Data Manager has processed the message it received earlier in 

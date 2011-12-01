@@ -1,5 +1,11 @@
 	package edu.nyu.cs.adb;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+
+import edu.nyu.cs.adb.Operation.Opcode;
+
 /**
  * A data structure defining a transaction. 
  * <br>Instance of Transaction will be created by the Transaction Manager 
@@ -13,28 +19,65 @@ public final class Transaction {
 	 * <br>status = run 
 	 * <br>status can be changed to wait
 	 */
-	Transaction () {
+	
+	private ArrayList <Operation> operations; 
+	private ArrayList <Integer> sites; 
+	private HashMap <String, ArrayList <Integer>> variableMap; 
+	private String transactionID; 
+	private boolean isTransactionCorrect = true; 
+	private boolean isDumpSuccessful = false; 
+	
+	Transaction (HashMap <String, ArrayList <Integer>> variableMap, String transactionID) {
 		// TODO
+		this.variableMap = variableMap; 
+		operations = new ArrayList <Operation> (); 
+		sites = new ArrayList <Integer> ();
+		this.transactionID = transactionID; 
 	}
 	
 	/**
-	 * Each time an operation is performed by Transaction, it is being added. 
-	 * We want to keep track of the operation of a transaction in case 
-	 * Transaction is being aborted, so it can restart later.
+	 *1. Each time an operation is performed by Transaction, it is being added. 
+	 *We want to keep track of the operation of a transaction in case Transaction is being aborted, so it can restart later
+	 *2. The sites on which the operation is active is being added to the list of sites used so far
+	 *3. If the operation is on a site that is not on the list of sites that have been up so far, transaction is a failure
+	 *4. Dump
 	 * @param operation Operation
 	 */
 	void addOperations (Operation operation) {
-		// TODO
+		
+		//0. Clear operations		
+		if (isDumpSuccessful)
+			operations.clear();
+	
+		//1. Add operation
+		operations.add(operation);
+	
+		//2.
+		String var = operation.getVariableID();
+		ArrayList <Integer> site = variableMap.get(var);
+		sites.addAll(site);
+	
 	}
+	
 	
 	/**
 	 * If a site fails, then it is removed from the set of sites. To make sure 
 	 * that the transaction can still be run, is calls isTransactionCorrect()
-	 * If it returns false, then the transaction is aborted
+	 * If the site that failed hold a unique variable with Write Lock
+	 * Then the transaction becomes incorrect
 	 * @param siteID
 	 */
 	void siteFailure (int siteID) {
-		// TODO
+		//Check if site was used
+		for (Operation operation: operations){
+			if (operation.getSiteID().contains(siteID)){
+				String var = operation.getVariableID(); 
+				if (variableMap.get(var).size() == 1 && operation.getOperationID() == Opcode.WRITE){
+					isTransactionCorrect = false; 
+				}
+				
+			}
+		}
 	}
 	
 	/**
@@ -54,7 +97,18 @@ public final class Transaction {
 	 * @return True or False
 	 */
 	boolean isTransactionCorrect () {
-		// TODO
-		return false;
+		return isTransactionCorrect;
 	}
+	
+	//GETTER: 
+	public String getTransactionID(){
+		return transactionID; 
+	}
+
+	public ArrayList<Integer> getSites() {
+		return sites;
+	}
+
+	
+	
 }
