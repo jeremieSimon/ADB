@@ -297,10 +297,10 @@ public final class TransactionManager {
 						dm.recover();
 					}
 					
-					//At the end of each cycle, update the TransactionMap
 				}
 				
-				// TODO implement the rest...
+				
+				//END OF CYCLE: 
 				// Now that the input has been processed, send messages
 				
 				// Sample Message generation code

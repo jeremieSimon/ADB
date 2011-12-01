@@ -23,7 +23,8 @@ public final class Transaction {
 	
 	public enum Status{
 		ACTIVE, 
-		WAIT, 
+		WAIT,
+		ABORTED, 
 		END
 	}
 	
@@ -32,7 +33,6 @@ public final class Transaction {
 	private ArrayList <Integer> sites; 
 	private HashMap <String, ArrayList <Integer>> variableMap; 
 	private String transactionID; 
-	private boolean isTransactionCorrect = true; 
 	private boolean isDumpSuccessful = false; 
 	private int operationIndex;  
 	private Status status; 
@@ -61,7 +61,7 @@ public final class Transaction {
 	void addOperations (Operation operation) {
 	
 		//Prevent adding operation to a Transaction that ended
-		if (status != Status.END){
+		if (status != Status.END && status != Status.ABORTED){
 			//0. Clear operations		
 			if (isDumpSuccessful)
 				operations.clear();
@@ -78,9 +78,22 @@ public final class Transaction {
 			sites.addAll(site);
 		}
 	}
-	
-	void updateTransaction(Message message){
-		//TODO
+	/**
+	 * 1. If response is success, increment the counter
+	 * 2. If response is lock, wait, keep the operation for the next cycle 
+	 * 3. If response is failure, set status to aborted, no more operation from that transaction can be sent
+	 * @param response
+	 */
+	void updateTransaction(Response response){
+		if (response.getStatus() == Response.Status.SUCCESS){
+			operationIndex++; 
+		}
+		else if (response.getStatus() == Response.Status.LOCKED){
+			status = Status.WAIT; 
+		}
+		else if (response.getStatus() == Response.Status.FAILURE){
+			status = Status.ABORTED;
+		}
 	}
 	
 	/**
@@ -95,7 +108,7 @@ public final class Transaction {
 			if (operation.getSiteID().contains(siteID)){
 				String var = operation.getVariableID(); 
 				if (variableMap.get(var).size() == 1 && operation.getOperationID() == Opcode.WRITE){
-					isTransactionCorrect = false; 
+					status = Status.ABORTED; 
 				}
 				
 			}
@@ -103,23 +116,24 @@ public final class Transaction {
 	}
 	
 	/**
-	 * When this function is called, it sends the operation that was/were last 
-	 * added to the set of sites
-	 * @return send message to all sites concerned  
+	 * Function called by TM at the end of each cycle. 
+	 * Return the operation to be executed next
+	 * @return operation   
 	 */
-	void sendToSite () {
-		// TODO
+	Operation getnextOperation() {
+		return operations.get(operationIndex);
 	}
 
 	/**
-	 * This function is called when the Transaction Manager reads ‘end Ti’ or 
-	 * when a site fails. This function make sure that the Transaction can 
-	 * commit. Typically, a transaction cannot commit if a site that stores a 
+	 * 1. A transaction cannot commit if a site that stores a 
 	 * unique variable failed during execution.
 	 * @return True or False
 	 */
 	boolean isTransactionCorrect () {
-		return isTransactionCorrect;
+		if (status == Status.ABORTED)
+			return false;
+		else
+			return true; 
 	}
 	
 	//GETTER: 
