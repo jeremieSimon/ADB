@@ -1,5 +1,8 @@
 package edu.nyu.cs.adb;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 /**
  * Describes an operation to be done by the Data Manager
  * <p>Immutable</p>
@@ -10,6 +13,8 @@ public final class Operation {
 	private final Opcode opcode;
 	private final String variableID;
 	private final int writeValue;
+	private HashMap<String, ArrayList <Integer>> variableMap =createVariableMap();
+	ArrayList <Integer> siteID; 
 	
 	/**
 	 * Operation code values
@@ -35,11 +40,14 @@ public final class Operation {
 	 * Constructs a new Operation from a builder object
 	 * @param builder
 	 */
-	private Operation (Builder builder) {
+	private Operation (Builder builder) {  
 		this.opcode = builder.opcode;
 		this.transactionID = builder.transactionID;
 		this.variableID = builder.variableID;
 		this.writeValue = builder.writeValue;
+		
+		siteID = variableMap.get(variableID);
+		
 	}
 	
 	/**
@@ -121,6 +129,8 @@ public final class Operation {
 	 */
 	public Opcode getOperationID () { return opcode; }
 	
+	public ArrayList <Integer> getSiteID () {return siteID; }
+	
 	/**
 	 * If this operation is a read or write, get the ID of the variable the 
 	 * operation is asked to act on
@@ -191,5 +201,28 @@ public final class Operation {
 		return "Operation [transactionID=" + transactionID + ", opcode="
 				+ opcode + ", variableID=" + variableID + ", writeValue="
 				+ writeValue + "]";
+	}
+	
+	private HashMap <String, ArrayList<Integer>> createVariableMap(){
+		
+		int NUMBER_OF_SITES = 10; 
+		HashMap<String, ArrayList <Integer>> variableMap = new HashMap<String, ArrayList <Integer>>();
+
+		ArrayList <Integer> sites = new ArrayList<Integer> (); 
+		for (int i=0; i<NUMBER_OF_SITES; i++){
+			sites.add(i);
+		}
+		
+		for (int i=1; i<20; i++){
+			if (i%2 == 0){
+			variableMap.put("x"+i, sites);
+			}
+			else{
+				ArrayList <Integer> A = new ArrayList<Integer>(); 
+				A.add(((1+i)%10)); 
+				variableMap.put("x"+i, A);
+				}
+		}
+		return variableMap; 
 	}
 }
