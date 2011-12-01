@@ -7,9 +7,9 @@
 //   the TX tries to get a lock on that site for the variable and eventually
 //   fails, either at commit time or via a timeout.
 //
-
 // If the R(T1,x2) went to site 2 then T1 should fail. Otherwise it
 // should succeed.
+
 
 begin(T1)
 begin(T2)

@@ -24,11 +24,15 @@ public final class TransactionManager {
 	private final List<DataManager> dataManagers = 
 		new ArrayList<DataManager>();
 	
+	private final int numberOfSites = 10; 
 	private final BufferedReader input;
 	private final PrintStream output;
 	private HashMap <String, ArrayList<Integer>> variableMap;
 	private HashMap <String, Transaction> transactionMap; 
-		
+	private ArrayList <Integer> sitesUp = new ArrayList <Integer>(); 
+	private Message.Builder[] messageBuilders = new Message.Builder [numberOfSites]; 	
+	private Message[] messages = new Message [numberOfSites]; 
+	
 	/**
 	 * This is the constructor, with additional functionality
 	 * <ol>
@@ -66,6 +70,7 @@ public final class TransactionManager {
 		}
 		
 		this.init();
+		run();
 	}
 	
 	/**
@@ -87,9 +92,8 @@ public final class TransactionManager {
 		this.input = new BufferedReader(tempreader);
 		this.output = out;
 		
-		variableMap = createVariableMap(); 
-		transactionMap =  new HashMap <String, Transaction>(); 
 		this.init();
+
 		
 	}
 	
@@ -100,6 +104,16 @@ public final class TransactionManager {
 		// Make data managers
 		for (int siteID = 1; siteID <= 10; siteID++) {
 			dataManagers.add(new DataManager(this, siteID));
+			sitesUp.add(siteID);
+		}
+		
+		//Create the maps
+		variableMap = createVariableMap(); 
+		transactionMap =  new HashMap <String, Transaction>(); 
+		
+		//init the messages: 
+		for (int i=0; i<numberOfSites; i++){
+			messageBuilders[i] = new Message.Builder(); 
 		}
 	}
 	
@@ -120,6 +134,12 @@ public final class TransactionManager {
 				// Ignore lines that start with "//"
 				if (currentLine.startsWith("//")) {
 					// Ignore this line and go to the next one
+					currentLine = input.readLine();
+					continue;
+				}
+				//Skip line if line is blank: 
+				if (currentLine.length() == 0){
+					System.out.println("OK");
 					currentLine = input.readLine();
 					continue;
 				}
@@ -149,7 +169,7 @@ public final class TransactionManager {
 
 						String transactionID = args[0];
 						//create a new instance of transaction: 
-						transactionMap.put(transactionID, new Transaction(variableMap, transactionID));
+						transactionMap.put(transactionID, new Transaction(variableMap, transactionID, sitesUp));
 						
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.BEGIN);
@@ -163,7 +183,7 @@ public final class TransactionManager {
 						String transactionID = args[0];
 						
 						//create a new instance of transaction: 
-						transactionMap.put(transactionID, new Transaction(variableMap, transactionID));
+						transactionMap.put(transactionID, new Transaction(variableMap, transactionID, sitesUp));
 						
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.BEGIN_READONLY);
@@ -247,6 +267,7 @@ public final class TransactionManager {
 						String transactionID = args[0];
 						
 						//Remove the transaction from transactions
+						System.out.println("REMOVE "+transactionID);
 						transactionMap.remove(transactionID);
 						
 						Operation.Builder builder = 
@@ -263,17 +284,12 @@ public final class TransactionManager {
 						
 						int siteID = Integer.parseInt(args[0]);
 						
-						//call siteFailure for transaction concerned
-						for (Transaction t: transactionMap.values()){
-							ArrayList <Integer> sites = t.getSites();
-							for (int site: sites){
-								if (site == siteID){
-									t.siteFailure(siteID);
-								}
-							}
+						//0. remove site from sitesUp: 
+						sitesUp.remove(sitesUp.indexOf(siteID));
+						//1. site failure: 	
+						for (Transaction transaction : transactionMap.values()){
+							transaction.siteFailure(siteID);
 						}
-						
-						
 						
 						if (siteID <= 0 || siteID > dataManagers.size()) {
 							throw new AssertionError("Site " + siteID 
@@ -288,6 +304,10 @@ public final class TransactionManager {
 					// event)
 					if (opcode.equals("recover")) {
 						int siteID = Integer.parseInt(args[0]);
+						
+						//add site to sitesUp: 
+						sitesUp.add(siteID);
+						
 						if (siteID <= 0 || siteID > dataManagers.size()) {
 							throw new AssertionError("Site " + siteID 
 									+ " does not exist");
@@ -301,6 +321,29 @@ public final class TransactionManager {
 				
 				
 				//END OF CYCLE: 
+				//Print transactions: 
+				System.out.println("TRANSCTION");
+				for (Transaction transaction: transactionMap.values()){
+					System.out.println(transaction);
+				}
+
+				//MESSAGE: 
+				for (Transaction transaction: transactionMap.values()){
+					if (transaction.getOperationIndex() != -1 && transaction.getStatus() != Transaction.Status.ABORTED){
+					for (Integer site: transaction.getSitesConcerned()){		
+							messageBuilders[site-1].addOperation(transaction.getnextOperation());}
+					}
+				}
+				for (int i=0; i<messageBuilders.length; i++){
+					messages[i] = messageBuilders[i].build();
+					System.out.println("Site "+(i+1)+" "+messages[i]+"\n");
+					messageBuilders[i].clear();
+				}
+				
+				
+				
+				System.out.println("END OF CYLCE\n\n");
+				
 				// Now that the input has been processed, send messages
 				
 				// Sample Message generation code
@@ -370,5 +413,11 @@ public final class TransactionManager {
 	 */
 	public void sendResponse (Response response) {
 		// TODO: implement
+	}
+	
+	public static void main (String[] args){
+		
+		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest1.txt", "tt.txt");
+		
 	}
 }

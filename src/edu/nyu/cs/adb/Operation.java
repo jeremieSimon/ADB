@@ -25,6 +25,7 @@ public final class Operation {
 		BEGIN_READONLY, 
 		READ, 
 		WRITE,
+		DUMP,
 		ABORT, 
 		FINISH
 	}
@@ -225,4 +226,5 @@ public final class Operation {
 		}
 		return variableMap; 
 	}
+
 }

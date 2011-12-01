@@ -41,7 +41,7 @@ public final class Message implements Iterable<Operation> {
 	 */
 	public static class Builder {
 		private final List<Operation> operations = new LinkedList<Operation>();
-		
+				
 		/**
 		 * Adds an operation to add to the message
 		 * @param operation

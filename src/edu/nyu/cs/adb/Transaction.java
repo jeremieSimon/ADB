@@ -30,24 +30,30 @@ public final class Transaction {
 	
 	
 	private ArrayList <Operation> operations; 
-	private ArrayList <Integer> sites; 
 	private HashMap <String, ArrayList <Integer>> variableMap; 
 	private String transactionID; 
-	private boolean isDumpSuccessful = false; 
 	private int operationIndex;  
 	private Status status; 
+	private ArrayList <Integer> sitesUp; 
+	private ArrayList <Integer> sitesConcerned; 
 	
 	
+	/**
+	 * 
+	 * @param variableMap
+	 * @param transactionID
+	 * @param sitesUp can only send a message to the sites that were up when the 
+	 * Transaction instance was created
+	 */
+	Transaction (HashMap <String, ArrayList <Integer>> variableMap, String transactionID, ArrayList <Integer> sitesUp) {
 
-	
-	Transaction (HashMap <String, ArrayList <Integer>> variableMap, String transactionID) {
-		// TODO
 		this.variableMap = variableMap; 
 		this.transactionID = transactionID; 
-		operationIndex = 0; 
+		this.sitesUp = sitesUp; 
+		sitesConcerned = (ArrayList<Integer>) this.sitesUp.clone();
+		operationIndex = -1; 
 		status = Status.ACTIVE; 
 		operations = new ArrayList <Operation> (); 
-		sites = new ArrayList <Integer> ();
 	}
 	
 	/**
@@ -60,22 +66,26 @@ public final class Transaction {
 	 */
 	void addOperations (Operation operation) {
 	
+		//Operation types can be W, R, End or Dump
+		
 		//Prevent adding operation to a Transaction that ended
 		if (status != Status.END && status != Status.ABORTED){
-			//0. Clear operations		
-			if (isDumpSuccessful)
-				operations.clear();
-	
-			if (operation.getOperationID() == Opcode.FINISH)
-				status = Status.END; 
-		
-			//1. Add operation
+			
+			//On Dump: 		
+			if (operation.getOperationID() == Operation.Opcode.DUMP){
+				//TODO...
+			}
+			//On End: 
+			else if (operation.getOperationID() == Operation.Opcode.FINISH){
+				operations.add(operation);
+			}
+			//On W or R: 
 			operations.add(operation);
+			if (operations.size() == 1){
+				operationIndex = 0; 
+			}
 	
-			//2.
-			String var = operation.getVariableID();
-			ArrayList <Integer> site = variableMap.get(var);
-			sites.addAll(site);
+
 		}
 	}
 	/**
@@ -97,22 +107,27 @@ public final class Transaction {
 	}
 	
 	/**
-	 * 1. If the site that failed hold a unique variable with Write Lock
+	 * 1. If the site that failed hold a variable with Write Lock
 	 * Then the transaction becomes incorrect
+	 * 2. If the site that failed hold a unique variable used by the Transaction
 	 * @param siteID
 	 */
 	void siteFailure (int siteID) {
 		
-		//Check if site was used
+		//1. Check if site was used
 		for (Operation operation: operations){
 			if (operation.getSiteID().contains(siteID)){
-				String var = operation.getVariableID(); 
-				if (variableMap.get(var).size() == 1 && operation.getOperationID() == Opcode.WRITE){
+				if (operation.getOperationID() == Opcode.WRITE)
 					status = Status.ABORTED; 
-				}
 				
+				String var = operation.getVariableID(); 
+				if (variableMap.get(var).size() == 1)
+					status = Status.ABORTED; 
 			}
 		}
+		
+		//2. Update the sitesUP: 
+		sitesUp.remove(siteID);
 	}
 	
 	/**
@@ -121,6 +136,11 @@ public final class Transaction {
 	 * @return operation   
 	 */
 	Operation getnextOperation() {
+		
+		Integer var = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
+		if (var %2 != 0)
+			sitesConcerned = (variableMap.get(operations.get(operationIndex).getVariableID()));
+		
 		return operations.get(operationIndex);
 	}
 
@@ -141,8 +161,35 @@ public final class Transaction {
 		return transactionID; 
 	}
 
-	public ArrayList<Integer> getSites() {
-		return sites;
+	public ArrayList <Integer> getSitesUp(){
+		return sitesUp; 
+	}
+	
+	public ArrayList <Integer> getSitesConcerned(){
+		if (sitesConcerned.size() == 1)
+			return sitesConcerned;
+		else
+			return sitesUp;
+	}
+	
+	public int getOperationIndex(){
+		return operationIndex; 
+	}
+	
+	public Status getStatus(){
+		return status;
+	}
+
+	
+	@Override
+	public String toString()
+	{
+		
+		String s =  "Transaction ID: "+transactionID+"\nStatus "+status+"\nFollowing Operations:\n";
+		for (Operation operation: operations){
+			s+=operation+"\n";
+		}
+		return s;
 	}
 
 	
