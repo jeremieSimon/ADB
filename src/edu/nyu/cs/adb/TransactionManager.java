@@ -185,7 +185,9 @@ public final class TransactionManager {
 						builder.setTransactionID(transactionID);
 						builder.setVariableID(variableID);
 						Operation read = builder.build();
-						// TODO implement the rest
+						
+						// Append the operation to the correct transaction: 
+						transactionMap.get(transactionID).addOperations(read);
 					}
 					
 					// W(T1,x6,v) says transaction 1 wishes to write all 
@@ -201,7 +203,9 @@ public final class TransactionManager {
 						builder.setVariableID(variableID);
 						builder.setWriteValue(writeValue);
 						Operation write = builder.build();
-						// TODO implement the rest
+						
+						// Append the operation to the correct transaction: 
+						transactionMap.get(transactionID).addOperations(write);
 					}
 					
 					// See below for specific cases for dump

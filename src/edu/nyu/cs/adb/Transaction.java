@@ -20,19 +20,34 @@ public final class Transaction {
 	 * <br>status can be changed to wait
 	 */
 	
+	
+	public enum Status{
+		ACTIVE, 
+		WAIT, 
+		END
+	}
+	
+	
 	private ArrayList <Operation> operations; 
 	private ArrayList <Integer> sites; 
 	private HashMap <String, ArrayList <Integer>> variableMap; 
 	private String transactionID; 
 	private boolean isTransactionCorrect = true; 
 	private boolean isDumpSuccessful = false; 
+	private int operationIndex;  
+	private Status status; 
+	
+	
+
 	
 	Transaction (HashMap <String, ArrayList <Integer>> variableMap, String transactionID) {
 		// TODO
 		this.variableMap = variableMap; 
+		this.transactionID = transactionID; 
+		operationIndex = 0; 
+		status = Status.ACTIVE; 
 		operations = new ArrayList <Operation> (); 
 		sites = new ArrayList <Integer> ();
-		this.transactionID = transactionID; 
 	}
 	
 	/**
@@ -44,30 +59,37 @@ public final class Transaction {
 	 * @param operation Operation
 	 */
 	void addOperations (Operation operation) {
+	
+		//Prevent adding operation to a Transaction that ended
+		if (status != Status.END){
+			//0. Clear operations		
+			if (isDumpSuccessful)
+				operations.clear();
+	
+			if (operation.getOperationID() == Opcode.FINISH)
+				status = Status.END; 
 		
-		//0. Clear operations		
-		if (isDumpSuccessful)
-			operations.clear();
+			//1. Add operation
+			operations.add(operation);
 	
-		//1. Add operation
-		operations.add(operation);
-	
-		//2.
-		String var = operation.getVariableID();
-		ArrayList <Integer> site = variableMap.get(var);
-		sites.addAll(site);
-	
+			//2.
+			String var = operation.getVariableID();
+			ArrayList <Integer> site = variableMap.get(var);
+			sites.addAll(site);
+		}
 	}
 	
+	void updateTransaction(Message message){
+		//TODO
+	}
 	
 	/**
-	 * If a site fails, then it is removed from the set of sites. To make sure 
-	 * that the transaction can still be run, is calls isTransactionCorrect()
-	 * If the site that failed hold a unique variable with Write Lock
+	 * 1. If the site that failed hold a unique variable with Write Lock
 	 * Then the transaction becomes incorrect
 	 * @param siteID
 	 */
 	void siteFailure (int siteID) {
+		
 		//Check if site was used
 		for (Operation operation: operations){
 			if (operation.getSiteID().contains(siteID)){
