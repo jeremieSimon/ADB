@@ -57,7 +57,9 @@ public final class Transaction {
 		status = Status.ACTIVE; 
 	}
 	
-	Transaction(){}
+	Transaction(String transactionID){
+		this.transactionID = transactionID; 
+	}
 	
 	/**
 	 *1. Each time an operation is performed by Transaction, it is being added. 

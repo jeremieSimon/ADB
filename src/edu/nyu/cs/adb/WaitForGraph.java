@@ -3,6 +3,7 @@ package edu.nyu.cs.adb;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A data structure used to detect deadlocks.
@@ -29,15 +30,16 @@ public final class WaitForGraph {
 		else{
 			transactions.add(transaction);
 		
-			if (waitForGraph.isEmpty())
+			if (waitForGraph.isEmpty()){
 				waitForGraph.put(transaction, null);
-			
+			}
 			else{
-				waitForGraph.put(transaction, null);
+				//waitForGraph.put(transaction, null);
 				updateTransaction(transaction);
 			}
 		}
 	}
+	
 	
 	/**
 	 * A transaction might acquire new locks while
@@ -46,6 +48,7 @@ public final class WaitForGraph {
 	 */
 	private void updateTransaction(Transaction transaction){
 		ArrayList <String> variables = new ArrayList <String>();
+		HashSet <String> edges = new HashSet <String>();
 		for (Lock lock : transaction.getLocksWait()){
 			if (lock.getLockType() == "WRITE")
 				variables.add(lock.getVariableID());
@@ -53,10 +56,11 @@ public final class WaitForGraph {
 		for (Transaction T: waitForGraph.keySet()){
 			for (Lock lock:  T.getLocksHold()){
 				if (variables.contains(lock.getVariableID())){
-					waitForGraph.get(transaction).add(T.getTransactionID());
+					edges.add(T.getTransactionID());
 				}
 			}
 		}
+		waitForGraph.put(transaction, edges);
 	}
 	
 	/**
@@ -86,17 +90,36 @@ public final class WaitForGraph {
 		return false;
 	}
 	
+	//GETTER: 
+	public HashMap <Transaction, HashSet <String>> getWaitForGraph(){ 
+		return waitForGraph; 
+	}
+	
 	public static void main(String[]args){
 		
 		WaitForGraph graph = new WaitForGraph(); 
-		Transaction t1 = new Transaction();
+		Transaction t1 = new Transaction("T1");
 		t1.addLocksHold(new Lock("x1", "WRITE"));
 		t1.addLocksHold(new Lock("x2", "WRITE"));
 		t1.addLocksWait(new Lock("x3", "WRITE"));
 		
-		Transaction t2 = new Transaction();
+		Transaction t2 = new Transaction("T2");
 		t2.addLocksHold(new Lock("x4", "WRITE"));
 		t2.addLocksWait(new Lock("x1", "WRITE"));
+		
+		Transaction t3 = new Transaction("T2");
+		t3.addLocksHold(new Lock("x5", "WRITE"));
+		t3.addLocksWait(new Lock("x4", "WRITE"));
+		
+		graph.addTransaction(t1);
+		graph.addTransaction(t2);
+		graph.addTransaction(t3);
+
+		
+		for (HashSet<String> set : graph.getWaitForGraph().values()){
+			System.out.println("Transaction:");
+				System.out.println("s "+set);
+		}
 		
 		
 		
