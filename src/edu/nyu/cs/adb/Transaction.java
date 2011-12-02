@@ -135,12 +135,7 @@ public final class Transaction {
 	 * Return the operation to be executed next
 	 * @return operation   
 	 */
-	Operation getnextOperation() {
-		
-		Integer var = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
-		if (var %2 != 0)
-			sitesConcerned = (variableMap.get(operations.get(operationIndex).getVariableID()));
-		
+	Operation getnextOperation() {	
 		return operations.get(operationIndex);
 	}
 
@@ -166,6 +161,10 @@ public final class Transaction {
 	}
 	
 	public ArrayList <Integer> getSitesConcerned(){
+		Integer var = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
+		if (var %2 != 0)
+			sitesConcerned = (variableMap.get(operations.get(operationIndex).getVariableID()));
+		
 		if (sitesConcerned.size() == 1)
 			return sitesConcerned;
 		else
