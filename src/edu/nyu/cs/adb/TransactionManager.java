@@ -31,8 +31,10 @@ public final class TransactionManager {
 	private HashMap <String, Transaction> transactionMap; 
 	private ArrayList <Integer> sitesUp = new ArrayList <Integer>(); 
 	private Message.Builder[] messageBuilders = new Message.Builder [numberOfSites]; 	
-	private Message[] messages = new Message [numberOfSites]; 
-	
+	private Message[] messages = new Message [numberOfSites];
+	private ArrayList <Response> responses = new ArrayList <Response>();
+	private ArrayList[] siteResponses = new ArrayList [numberOfSites];
+
 	/**
 	 * This is the constructor, with additional functionality
 	 * <ol>
@@ -103,7 +105,7 @@ public final class TransactionManager {
 	private void init () {
 		// Make data managers
 		for (int siteID = 1; siteID <= numberOfSites; siteID++) {
-			dataManagers.add(new DataManager(this, siteID));
+			dataManagers.add(new DataManager(siteID));
 			sitesUp.add(siteID);
 		}
 		
@@ -330,16 +332,18 @@ public final class TransactionManager {
 				//MESSAGE: 
 				for (Transaction transaction: transactionMap.values()){
 					if (transaction.getOperationIndex() != -1 && transaction.getStatus() != Transaction.Status.ABORTED){
-					for (Integer site: transaction.getSitesConcerned()){		
-							messageBuilders[site-1].addOperation(transaction.getnextOperation());}
+						for (int i=0; i<messageBuilders.length; i++){
+							messageBuilders[i].addOperation(transaction.getnextOperation());
+							messages[i] = messageBuilders[i].build();
+							dataManagers.get(i).sendMessage(messages[i]);
+							siteResponses[i] = dataManagers.get(i).update();
+							System.out.println("Site "+(i+1)+" "+messages[i]);
+							System.out.println("response message "+siteResponses[i]);
+							messageBuilders[i].clear();
+						}
 					}
 				}
-				for (int i=0; i<messageBuilders.length; i++){
-					messages[i] = messageBuilders[i].build();
-					dataManagers.get(i).sendMessage(messages[i]);
-					System.out.println("Site "+(i+1)+" "+messages[i]+"\n");
-					messageBuilders[i].clear();
-				}
+
 				
 				
 				

@@ -228,6 +228,9 @@ public final class DataManager {
 	 * @param message The message object
 	 */
 	void sendMessage (Message message) {
+		
+		responses.clear();
+		
 		if (isActive) {
 			currentMessage = message;
 		}
@@ -240,7 +243,7 @@ public final class DataManager {
 	ArrayList<Response> update () {
 		// Don't process any messages if the site has failed
 		if (!isActive) return null;
-		
+
 		// Don't process any messages if there isn't any
 		if (currentMessage == null) return null;
 		
@@ -425,10 +428,10 @@ public final class DataManager {
 						readOnlyTransactions.containsKey(transactionID);
 					boolean isReadWrite = 
 						readWriteTransactions.contains(transactionID);
-					if (!isReadOnly && !isReadWrite) {
-						throw new AssertionError(
-								transactionID + " not active");
-					}
+					//if (!isReadOnly && !isReadWrite) {
+				//		throw new AssertionError(
+				//				transactionID + " not active");
+				//	}
 					
 					// If RO read from stable storage history
 					if (readOnlyTransactions.containsKey(transactionID)) {
@@ -574,7 +577,7 @@ public final class DataManager {
 		}
 		currentMessage = null;
 		currentTime++;
-		return null;
+		return responses;
 	}
 	
 	/**
