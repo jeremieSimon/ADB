@@ -85,4 +85,19 @@ public final class WaitForGraph {
 		// TODO
 		return false;
 	}
+	
+	public static void main(String[]args){
+		
+		WaitForGraph graph = new WaitForGraph(); 
+		Transaction t1 = new Transaction();
+		t1.addLocks(new Lock("x1", "WRITE"));
+		t1.addLocks(new Lock("x2", "WRITE"));
+		
+		Transaction t2 = new Transaction();
+		t2.addLocks(new Lock("x1", "WRITE"));
+		t2.addLocks(new Lock("x3", "WRITE"));
+		
+		
+		
+	}
 }

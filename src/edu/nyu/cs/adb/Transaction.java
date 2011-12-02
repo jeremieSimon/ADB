@@ -36,7 +36,8 @@ public final class Transaction {
 	private Status status; 
 	private ArrayList <Integer> sitesUp; 
 	private ArrayList <Integer> sitesConcerned; 
-	private ArrayList <Lock> locks = new ArrayList <Lock>();
+	private ArrayList <Lock> locksHold = new ArrayList <Lock>();
+	private ArrayList <Lock> locksWait = new ArrayList <Lock>();
 	
 	
 	/**
@@ -55,6 +56,8 @@ public final class Transaction {
 		operationIndex = -1; 
 		status = Status.ACTIVE; 
 	}
+	
+	Transaction(){}
 	
 	/**
 	 *1. Each time an operation is performed by Transaction, it is being added. 
@@ -97,12 +100,18 @@ public final class Transaction {
 	void sendResponse(Response response){
 		if (response.getStatus() == Response.Status.SUCCESS){
 			operationIndex++; 
+			locksWait.clear();
 		}
 		else if (response.getStatus() == Response.Status.LOCKED){
 			status = Status.WAIT; 
+			//Add a lock to locksWait
+			String variableID = operations.get(operationIndex).getVariableID();
+			String lockType = operations.get(operationIndex).getOperationID().toString();
+			locksWait.add(new Lock (variableID, lockType));
 		}
 		else if (response.getStatus() == Response.Status.FAILURE){
 			status = Status.ABORTED;
+			locksWait.clear();
 		}
 	}
 	
@@ -143,7 +152,7 @@ public final class Transaction {
 				 String lockType = operations.get(operationIndex-1).getOperationID().toString();
 				 String variableID = operations.get(operationIndex-1).getVariableID();
 				
-				 locks.add(new Lock(variableID, lockType));
+				 locksHold.add(new Lock(variableID, lockType));
 			}
 		}
 		
@@ -191,8 +200,22 @@ public final class Transaction {
 		return status;
 	}
 
-	public ArrayList <Lock> getLocks(){
-		return locks;
+	public ArrayList <Lock> getLocksHold(){
+		return locksHold;
+	}
+	
+	public ArrayList <Lock> getLockWait(){
+		return locksWait;
+	}
+	
+	//TO BE REMOVED
+	public void addLocksHold(Lock lock){
+		locksHold.add(lock);
+	}
+
+	//TO BE REMOVED
+	public void addLocksWait(Lock lock){
+		locksWait.add(lock);
 	}
 	
 	@Override
