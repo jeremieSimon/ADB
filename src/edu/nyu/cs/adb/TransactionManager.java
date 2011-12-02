@@ -34,6 +34,7 @@ public final class TransactionManager {
 	private Message[] messages = new Message [numberOfSites];
 	private ArrayList <Response> responses = new ArrayList <Response>();
 	private ArrayList[] siteResponses = new ArrayList [numberOfSites];
+	private int age = 0; 
 
 	/**
 	 * This is the constructor, with additional functionality
@@ -150,6 +151,7 @@ public final class TransactionManager {
 				// separated by a semicolon and a space ("; ")
 				String [] operations = currentLine.split("; ");
 				for (String operation : operations) {
+					age++;
 					// In each operation, the opcode is before the parentheses 
 					// and the arguments are inside them
 					int lparen = operation.indexOf('(');
@@ -171,7 +173,7 @@ public final class TransactionManager {
 
 						String transactionID = args[0];
 						//create a new instance of transaction: 
-						transactionMap.put(transactionID, new Transaction(variableMap, transactionID, sitesUp));
+						transactionMap.put(transactionID, new Transaction(variableMap, transactionID, sitesUp, age));
 						
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.BEGIN);
@@ -185,7 +187,7 @@ public final class TransactionManager {
 						String transactionID = args[0];
 						
 						//create a new instance of transaction: 
-						transactionMap.put(transactionID, new Transaction(variableMap, transactionID, sitesUp));
+						transactionMap.put(transactionID, new Transaction(variableMap, transactionID, sitesUp, age));
 						
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.BEGIN_READONLY);

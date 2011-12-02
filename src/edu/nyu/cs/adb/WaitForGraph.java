@@ -84,9 +84,9 @@ public final class WaitForGraph {
 	 * acyclic
 	 * @return True or False
 	 */
-	boolean isDeadlock() {
-		// TODO
-		return false;
+	void isDeadlock() {
+		//Init: choose node with 
+		ArrayList <Transaction> nodes; 
 	}
 	
 	/**

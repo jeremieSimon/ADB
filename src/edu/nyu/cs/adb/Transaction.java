@@ -20,8 +20,13 @@ public final class Transaction {
 	 * <br>status can be changed to wait
 	 */
 	
+	/**
+	 * A transaction is said IDLE, when it starts but has no operation on going
+	 * After a transaction is asked to read or write, a transaction becomes active
+	 */
 	
 	public enum Status{
+		IDLE,
 		ACTIVE, 
 		WAIT,
 		ABORTED, 
@@ -33,6 +38,7 @@ public final class Transaction {
 	private HashMap <String, ArrayList <Integer>> variableMap; 
 	private String transactionID; 
 	private int operationIndex;  
+	private int age; 
 	private Status status; 
 	private ArrayList <Integer> sitesUp; 
 	private ArrayList <Integer> sitesConcerned; 
@@ -47,14 +53,15 @@ public final class Transaction {
 	 * @param sitesUp can only send a message to the sites that were up when the 
 	 * Transaction instance was created
 	 */
-	Transaction (HashMap <String, ArrayList <Integer>> variableMap, String transactionID, ArrayList <Integer> sitesUp) {
+	Transaction (HashMap <String, ArrayList <Integer>> variableMap, String transactionID, ArrayList <Integer> sitesUp, int age) {
 
 		this.variableMap = variableMap; 
 		this.transactionID = transactionID; 
 		this.sitesUp = sitesUp; 
 		sitesConcerned = (ArrayList<Integer>) this.sitesUp.clone();
 		operationIndex = -1; 
-		status = Status.ACTIVE; 
+		status = Status.IDLE; 
+		this.age = age;
 	}
 	
 	Transaction(String transactionID){
@@ -84,10 +91,12 @@ public final class Transaction {
 			else if (operation.getOperationID() == Operation.Opcode.FINISH){
 				operations.add(operation);
 			}
-			//On W or R: 
+			//On WRITE, READ or BEGIN: 
 			operations.add(operation);
+			//init operation index
 			if (operations.size() == 1){
 				operationIndex = 0; 
+				status = Status.ACTIVE;
 			}
 	
 
