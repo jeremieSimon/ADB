@@ -102,7 +102,7 @@ public final class TransactionManager {
 	 */
 	private void init () {
 		// Make data managers
-		for (int siteID = 1; siteID <= 10; siteID++) {
+		for (int siteID = 1; siteID <= numberOfSites; siteID++) {
 			dataManagers.add(new DataManager(this, siteID));
 			sitesUp.add(siteID);
 		}
@@ -336,6 +336,7 @@ public final class TransactionManager {
 				}
 				for (int i=0; i<messageBuilders.length; i++){
 					messages[i] = messageBuilders[i].build();
+					dataManagers.get(i).sendMessage(messages[i]);
 					System.out.println("Site "+(i+1)+" "+messages[i]+"\n");
 					messageBuilders[i].clear();
 				}

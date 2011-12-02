@@ -1,5 +1,6 @@
 package edu.nyu.cs.adb;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -17,7 +18,8 @@ import edu.nyu.cs.adb.Response.Status;
  * @author dandelarosa
  */
 public final class DataManager {
-	private final TransactionManager transactionManager;
+	//private final TransactionManager transactionManager;
+	private ArrayList <Response> responses = new ArrayList <Response>();
 	private final int siteID;
 	private int currentTime = 0;
 	private int lastRecoveryTime = 0;
@@ -124,8 +126,8 @@ public final class DataManager {
 	 * project.
 	 * @param siteID
 	 */
-	DataManager (TransactionManager transactionManager, int siteID) {
-		this.transactionManager = transactionManager;
+	DataManager (int siteID) {
+		//this.transactionManager = transactionManager;
 		this.siteID = siteID;
 		
 		// Even indexed variables are at all sites
@@ -235,12 +237,12 @@ public final class DataManager {
 	 * Processes the message in the message buffer. To be called at every 
 	 * timestep.
 	 */
-	void update () {
+	ArrayList<Response> update () {
 		// Don't process any messages if the site has failed
-		if (!isActive) return;
+		if (!isActive) return null;
 		
 		// Don't process any messages if there isn't any
-		if (currentMessage == null) return;
+		if (currentMessage == null) return null;
 		
 		for (Operation operation : currentMessage) {
 			switch (operation.getOperationID()) {
@@ -293,7 +295,8 @@ public final class DataManager {
 						new Response.Builder(siteID, Status.SUCCESS);
 					responseBuilder.setTransactionID(transactionID);
 					Response success = responseBuilder.build();
-					transactionManager.sendResponse(success);
+					//transactionManager.sendResponse(success);
+					responses.add(success);
 					break;
 				}
 				case BEGIN:
@@ -318,7 +321,8 @@ public final class DataManager {
 						new Response.Builder(siteID, Status.SUCCESS);
 					responseBuilder.setTransactionID(transactionID);
 					Response success = responseBuilder.build();
-					transactionManager.sendResponse(success);
+					//transactionManager.sendResponse(success);
+					responses.add(success);
 					break;
 				}
 				case BEGIN_READONLY:
@@ -343,7 +347,8 @@ public final class DataManager {
 						new Response.Builder(siteID, Status.SUCCESS);
 					responseBuilder.setTransactionID(transactionID);
 					Response success = responseBuilder.build();
-					transactionManager.sendResponse(success);
+					//transactionManager.sendResponse(success);
+					responses.add(success);
 					break;
 				}
 				case FINISH:
@@ -393,7 +398,8 @@ public final class DataManager {
 						new Response.Builder(siteID, Status.SUCCESS);
 					responseBuilder.setTransactionID(transactionID);
 					Response success = responseBuilder.build();
-					transactionManager.sendResponse(success);
+					//transactionManager.sendResponse(success);
+					responses.add(success);
 					break;
 				}
 				case READ:
@@ -408,8 +414,9 @@ public final class DataManager {
 							new Response.Builder(siteID, Status.FAILURE);
 						responseBuilder.setTransactionID(transactionID);
 						Response failure = responseBuilder.build();
-						transactionManager.sendResponse(failure);
+						//transactionManager.sendResponse(failure);
 						// Don't do anything else with this operation
+						responses.add(failure);
 						break;
 					}
 					
@@ -439,8 +446,9 @@ public final class DataManager {
 								builder.setTransactionID(transactionID);
 								builder.setReadValue(value);
 								Response success = builder.build();
-								transactionManager.sendResponse(success);
+								//transactionManager.sendResponse(success);
 								// Ignore the remaining history
+								responses.add(success);
 								break;
 							}
 						}
@@ -466,8 +474,9 @@ public final class DataManager {
 							builder.setTransactionID(transactionID);
 							builder.setReadValue(readValue);
 							Response readSuccess = builder.build();
-							transactionManager.sendResponse(readSuccess);
+							//transactionManager.sendResponse(readSuccess);
 							// Don't do anything else with this operation
+							responses.add(readSuccess);
 							break;
 						}
 						else {
@@ -477,8 +486,9 @@ public final class DataManager {
 								new Response.Builder(siteID, Status.LOCKED);
 							builder.setTransactionID(transactionID);
 							Response locked = builder.build();
-							transactionManager.sendResponse(locked);
+							//transactionManager.sendResponse(locked);
 							// Don't do anything else with this operation
+							responses.add(locked);
 							break;
 						}
 					}
@@ -499,9 +509,10 @@ public final class DataManager {
 								new Response.Builder(siteID, Status.LOCKED);
 							builder.setTransactionID(transactionID);
 							Response locked = builder.build();
-							transactionManager.sendResponse(locked);
+							//transactionManager.sendResponse(locked);
 							
 							isReadLocked = true;
+							responses.add(locked);
 							break;
 						}
 					}
@@ -539,9 +550,10 @@ public final class DataManager {
 							new Response.Builder(siteID, Status.SUCCESS);
 						builder.setTransactionID(transactionID);
 						Response success = builder.build();
-						transactionManager.sendResponse(success);
+						//transactionManager.sendResponse(success);
 						
 						// Don't do anything else with this operation
+						responses.add(success);
 						break;
 					}
 					else {
@@ -551,9 +563,10 @@ public final class DataManager {
 							new Response.Builder(siteID, Status.LOCKED);
 						builder.setTransactionID(transactionID);
 						Response locked = builder.build();
-						transactionManager.sendResponse(locked);
+						//transactionManager.sendResponse(locked);
 						
 						// Don't do anything else with this operation
+						responses.add(locked);
 						break;
 					}
 				}
@@ -561,6 +574,7 @@ public final class DataManager {
 		}
 		currentMessage = null;
 		currentTime++;
+		return null;
 	}
 	
 	/**
