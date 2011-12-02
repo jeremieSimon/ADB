@@ -90,6 +90,15 @@ public final class WaitForGraph {
 		return false;
 	}
 	
+	/**
+	 * This function is called if a deadlock is detected in the graph
+	 * It tells the TM which Transaction to abort
+	 * @return Transaction object
+	 */
+	private Transaction abortTransaction(){
+		return null;
+	}
+	
 	//GETTER: 
 	public HashMap <Transaction, HashSet <String>> getWaitForGraph(){ 
 		return waitForGraph; 
