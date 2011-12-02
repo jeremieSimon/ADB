@@ -50,7 +50,6 @@ public final class WaitForGraph {
 		ArrayList <String> variables = new ArrayList <String>();
 		HashSet <String> edges = new HashSet <String>();
 		for (Lock lock : transaction.getLocksWait()){
-			if (lock.getLockType() == "WRITE")
 				variables.add(lock.getVariableID());
 		}
 		for (Transaction T: waitForGraph.keySet()){
@@ -114,11 +113,11 @@ public final class WaitForGraph {
 		
 		Transaction t2 = new Transaction("T2");
 		t2.addLocksHold(new Lock("x4", "WRITE"));
-		t2.addLocksWait(new Lock("x1", "WRITE"));
+		t2.addLocksWait(new Lock("x1", "READ"));
 		
 		Transaction t3 = new Transaction("T2");
 		t3.addLocksHold(new Lock("x5", "WRITE"));
-		t3.addLocksWait(new Lock("x4", "WRITE"));
+		t3.addLocksWait(new Lock("x4", "READ"));
 		
 		graph.addTransaction(t1);
 		graph.addTransaction(t2);
