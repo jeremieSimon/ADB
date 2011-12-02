@@ -1,5 +1,8 @@
 package edu.nyu.cs.adb;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+
 /**
  * A data structure used to detect deadlocks.
  * <br>This class is a singleton. 
@@ -8,18 +11,18 @@ package edu.nyu.cs.adb;
  */
 public final class WaitForGraph {
 	/**
-	 * This function is called by the Transaction Manager. The Transaction 
-	 * Manager will decide to call this function if it thinks that the 
-	 * transaction should wait. 
-	 * <br>The waiting Transaction it is being added to the graph
+	 * This function is called when a transaction is waiting. 
 	 * @param transaction Transaction
 	 */
+	
+	private ArrayList <HashSet <Transaction>> transactions = new ArrayList<HashSet <Transaction>>();
+	
 	void addNode (Transaction transaction) {
-		// TODO
+		
 	}
 	
 	/**
-	 * When a transaction can get the lock, it is removed from the graph  
+	 * Called when a transaction go from WAIT to ACTIVE or ABORTED 
 	 * @param transaction transaction
 	 */
 	void removeNode (Transaction transaction) {

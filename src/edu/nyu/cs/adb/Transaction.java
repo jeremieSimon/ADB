@@ -29,13 +29,14 @@ public final class Transaction {
 	}
 	
 	
-	private ArrayList <Operation> operations; 
+	private ArrayList <Operation> operations = new ArrayList <Operation> ();
 	private HashMap <String, ArrayList <Integer>> variableMap; 
 	private String transactionID; 
 	private int operationIndex;  
 	private Status status; 
 	private ArrayList <Integer> sitesUp; 
 	private ArrayList <Integer> sitesConcerned; 
+	private ArrayList <String> locks = new ArrayList <String>();
 	
 	
 	/**
@@ -53,7 +54,6 @@ public final class Transaction {
 		sitesConcerned = (ArrayList<Integer>) this.sitesUp.clone();
 		operationIndex = -1; 
 		status = Status.ACTIVE; 
-		operations = new ArrayList <Operation> (); 
 	}
 	
 	/**
@@ -94,7 +94,7 @@ public final class Transaction {
 	 * 3. If response is failure, set status to aborted, no more operation from that transaction can be sent
 	 * @param response
 	 */
-	void updateTransaction(Response response){
+	void sendResponse(Response response){
 		if (response.getStatus() == Response.Status.SUCCESS){
 			operationIndex++; 
 		}
@@ -161,8 +161,9 @@ public final class Transaction {
 	}
 	
 	public ArrayList <Integer> getSitesConcerned(){
-		Integer var = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
-		if (var %2 != 0)
+		
+		Integer variableID = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
+		if (variableID %2 != 0)
 			sitesConcerned = (variableMap.get(operations.get(operationIndex).getVariableID()));
 		
 		if (sitesConcerned.size() == 1)
