@@ -13,7 +13,7 @@ import java.util.HashSet;
 public final class WaitForGraph {
 
 	private ArrayList <Transaction> transactions = new ArrayList <Transaction>();
-	private HashMap <Transaction, HashSet <String>> graph = new HashMap <Transaction, HashSet <String>>();
+	private HashMap <Transaction, HashSet <String>> waitForGraph = new HashMap <Transaction, HashSet <String>>();
 
 	
 	/**
@@ -29,11 +29,11 @@ public final class WaitForGraph {
 		else{
 			transactions.add(transaction);
 		
-			if (graph.isEmpty())
-				graph.put(transaction, null);
+			if (waitForGraph.isEmpty())
+				waitForGraph.put(transaction, null);
 			
 			else{
-				graph.put(transaction, null);
+				waitForGraph.put(transaction, null);
 				updateTransaction(transaction);
 			}
 		}
@@ -50,10 +50,10 @@ public final class WaitForGraph {
 			if (lock.getLockType() == "WRITE")
 				variables.add(lock.getVariableID());
 		}
-		for (Transaction T: graph.keySet()){
+		for (Transaction T: waitForGraph.keySet()){
 			for (Lock lock:  T.getLocks()){
 				if (variables.contains(lock.getVariableID())){
-					graph.get(transaction).add(T.getTransactionID());
+					waitForGraph.get(transaction).add(T.getTransactionID());
 				}
 			}
 		}
@@ -64,10 +64,10 @@ public final class WaitForGraph {
 	 * @param transaction transaction
 	 */
 	void removeNode (Transaction transaction) {
-		graph.remove(transaction);
+		waitForGraph.remove(transaction);
 		
 		//Need to update all graph
-		for (Transaction t: graph.keySet()){
+		for (Transaction t: waitForGraph.keySet()){
 			updateTransaction(t);
 		}
 	}
