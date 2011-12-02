@@ -2,15 +2,12 @@ package edu.nyu.cs.adb;
 
 public class Lock {
 	
-	public enum LockType{
-		READ, 
-		WRITE
-	}
+
 	
 	private String variableID; 
-	private LockType lockType; 
+	private String lockType; 
 	
-	public Lock(String variableID, LockType lockType){
+	public Lock(String variableID, String lockType){
 		
 		this.variableID = variableID; 
 		this.lockType = lockType; 
@@ -20,7 +17,7 @@ public class Lock {
 		return variableID;
 	}
 
-	public LockType getLockType() {
+	public String getLockType() {
 		return lockType;
 	}
 

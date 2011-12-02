@@ -1,6 +1,7 @@
 package edu.nyu.cs.adb;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -14,11 +15,47 @@ public final class WaitForGraph {
 	 * This function is called when a transaction is waiting. 
 	 * @param transaction Transaction
 	 */
+	private ArrayList <Transaction> transactions = new ArrayList <Transaction>();
+	private HashMap <Transaction, HashSet <String>> graph = new HashMap <Transaction, HashSet <String>>();
 	
-	private ArrayList <HashSet <Transaction>> transactions = new ArrayList<HashSet <Transaction>>();
-	
-	void addNode (Transaction transaction) {
+	void addTransaction (Transaction transaction) {
 		
+		//If transaction is already here, update the transaction
+		if (transactions.contains(transaction.getTransactionID())){
+			updateTransaction(transaction);
+		}
+		else{
+			transactions.add(transaction);
+		
+			if (graph.isEmpty())
+				graph.put(transaction, null);
+			
+			else{
+				graph.put(transaction, null);
+				updateTransaction(transaction);
+			}
+
+		}
+	}
+	
+	/**
+	 * A transaction might acquire new locks while
+	 * other are waiting. We wanna keep updating the transaction
+	 * @param transaction
+	 */
+	private void updateTransaction(Transaction transaction){
+		ArrayList <String> variables = new ArrayList <String>();
+		for (Lock lock : transaction.getLocks()){
+			if (lock.getLockType() == "WRITE")
+				variables.add(lock.getVariableID());
+		}
+		for (Transaction T: graph.keySet()){
+			for (Lock lock:  T.getLocks()){
+				if (variables.contains(lock.getVariableID())){
+					graph.get(transaction).add(T.getTransactionID());
+				}
+			}
+		}
 	}
 	
 	/**

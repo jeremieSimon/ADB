@@ -36,7 +36,7 @@ public final class Transaction {
 	private Status status; 
 	private ArrayList <Integer> sitesUp; 
 	private ArrayList <Integer> sitesConcerned; 
-	private ArrayList <String> locks = new ArrayList <String>();
+	private ArrayList <Lock> locks = new ArrayList <Lock>();
 	
 	
 	/**
@@ -136,6 +136,17 @@ public final class Transaction {
 	 * @return operation   
 	 */
 	Operation getnextOperation() {	
+		
+		//1. Transaction gets lock from previous operation
+		if (operationIndex > 0){
+			if (operations.get(operationIndex-1).getOperationID() != Operation.Opcode.DUMP){
+				 String lockType = operations.get(operationIndex-1).getOperationID().toString();
+				 String variableID = operations.get(operationIndex-1).getVariableID();
+				
+				 locks.add(new Lock(variableID, lockType));
+			}
+		}
+		
 		return operations.get(operationIndex);
 	}
 
@@ -180,6 +191,9 @@ public final class Transaction {
 		return status;
 	}
 
+	public ArrayList <Lock> getLocks(){
+		return locks;
+	}
 	
 	@Override
 	public String toString()
