@@ -204,7 +204,7 @@ public final class Transaction {
 		return locksHold;
 	}
 	
-	public ArrayList <Lock> getLockWait(){
+	public ArrayList <Lock> getLocksWait(){
 		return locksWait;
 	}
 	

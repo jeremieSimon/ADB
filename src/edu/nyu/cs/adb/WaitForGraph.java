@@ -46,12 +46,12 @@ public final class WaitForGraph {
 	 */
 	private void updateTransaction(Transaction transaction){
 		ArrayList <String> variables = new ArrayList <String>();
-		for (Lock lock : transaction.getLocks()){
+		for (Lock lock : transaction.getLocksWait()){
 			if (lock.getLockType() == "WRITE")
 				variables.add(lock.getVariableID());
 		}
 		for (Transaction T: waitForGraph.keySet()){
-			for (Lock lock:  T.getLocks()){
+			for (Lock lock:  T.getLocksHold()){
 				if (variables.contains(lock.getVariableID())){
 					waitForGraph.get(transaction).add(T.getTransactionID());
 				}
@@ -90,12 +90,13 @@ public final class WaitForGraph {
 		
 		WaitForGraph graph = new WaitForGraph(); 
 		Transaction t1 = new Transaction();
-		t1.addLocks(new Lock("x1", "WRITE"));
-		t1.addLocks(new Lock("x2", "WRITE"));
+		t1.addLocksHold(new Lock("x1", "WRITE"));
+		t1.addLocksHold(new Lock("x2", "WRITE"));
+		t1.addLocksWait(new Lock("x3", "WRITE"));
 		
 		Transaction t2 = new Transaction();
-		t2.addLocks(new Lock("x1", "WRITE"));
-		t2.addLocks(new Lock("x3", "WRITE"));
+		t2.addLocksHold(new Lock("x4", "WRITE"));
+		t2.addLocksWait(new Lock("x1", "WRITE"));
 		
 		
 		
