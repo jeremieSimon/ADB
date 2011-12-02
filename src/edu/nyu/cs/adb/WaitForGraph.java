@@ -11,13 +11,15 @@ import java.util.HashSet;
  * @author dandelarosa
  */
 public final class WaitForGraph {
+
+	private ArrayList <Transaction> transactions = new ArrayList <Transaction>();
+	private HashMap <Transaction, HashSet <String>> graph = new HashMap <Transaction, HashSet <String>>();
+
+	
 	/**
 	 * This function is called when a transaction is waiting. 
 	 * @param transaction Transaction
 	 */
-	private ArrayList <Transaction> transactions = new ArrayList <Transaction>();
-	private HashMap <Transaction, HashSet <String>> graph = new HashMap <Transaction, HashSet <String>>();
-	
 	void addTransaction (Transaction transaction) {
 		
 		//If transaction is already here, update the transaction
@@ -34,7 +36,6 @@ public final class WaitForGraph {
 				graph.put(transaction, null);
 				updateTransaction(transaction);
 			}
-
 		}
 	}
 	
@@ -63,7 +64,12 @@ public final class WaitForGraph {
 	 * @param transaction transaction
 	 */
 	void removeNode (Transaction transaction) {
-		// TODO
+		graph.remove(transaction);
+		
+		//Need to update all graph
+		for (Transaction t: graph.keySet()){
+			updateTransaction(t);
+		}
 	}
 	
 	/**
