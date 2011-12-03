@@ -32,8 +32,8 @@ public final class TransactionManager {
 	private ArrayList <Integer> sitesUp = new ArrayList <Integer>(); 
 	private Message.Builder[] messageBuilders = new Message.Builder [numberOfSites]; 	
 	private Message[] messages = new Message [numberOfSites];
-	private ArrayList <Response> responses = new ArrayList <Response>();
-	private ArrayList[] siteResponses = new ArrayList [numberOfSites];
+	//private ArrayList <Response> responses = new ArrayList <Response>();
+	private ArrayList <Response>[] siteResponses = new ArrayList [numberOfSites];
 	private int age = 0; 
 
 	/**
@@ -142,7 +142,6 @@ public final class TransactionManager {
 				}
 				//Skip line if line is blank: 
 				if (currentLine.length() == 0){
-					System.out.println("OK");
 					currentLine = input.readLine();
 					continue;
 				}
@@ -179,7 +178,9 @@ public final class TransactionManager {
 							new Operation.Builder(Opcode.BEGIN);
 						builder.setTransactionID(transactionID);
 						Operation begin = builder.build();
-						// TODO implement the rest
+
+						transactionMap.get(transactionID).addOperations(begin);
+
 					}
 					
 					// beginRO(T3) says that T3 is read-only
@@ -272,13 +273,14 @@ public final class TransactionManager {
 						
 						//Remove the transaction from transactions
 						System.out.println("REMOVE "+transactionID);
-						transactionMap.remove(transactionID);
 						
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.FINISH);
 						builder.setTransactionID(transactionID);
 						Operation endOperation = builder.build();
-						// TODO implement the rest
+						//Add end operation
+						transactionMap.get(transactionID).addOperations(endOperation);
+
 					}
 					
 					// fail(6) says site 6 fails. (This is not issued by a 
@@ -331,7 +333,7 @@ public final class TransactionManager {
 					System.out.println(transaction);
 				}
 
-				//MESSAGE + RESPONSE: 
+				//CREATE MESSAGE builder: 
 				for (Transaction transaction: transactionMap.values()){
 					if (transaction.getOperationIndex() != -1 && transaction.getStatus() != Transaction.Status.ABORTED){
 						for (Integer site: transaction.getSitesConcerned()){
@@ -339,17 +341,25 @@ public final class TransactionManager {
 						}
 					}
 				}
-					for (int i=0; i<messageBuilders.length; i++){
-						messages[i] = messageBuilders[i].build();
-						dataManagers.get(i).sendMessage(messages[i]);
-						siteResponses[i] = dataManagers.get(i).update();
-						System.out.println("Site "+(i+1)+" "+messages[i]);
-						System.out.println("response message "+siteResponses[i]);
-						messageBuilders[i].clear();
+				
+				for (int i=0; i<messageBuilders.length; i++){
+						
+					messages[i] = messageBuilders[i].build();	
+					System.out.println("Site "+(i+1)+" "+messages[i]);
+					dataManagers.get(i).sendMessage(messages[i]);
+					siteResponses[i] = dataManagers.get(i).update();
+					for (Response r: siteResponses[i]){
+						transactionMap.get(r.getTransactionID()).sendResponse(r);
 					}
-					
+					System.out.println("response message "+siteResponses[i]);
+					messageBuilders[i].clear();
+				}
+														
 				
-				
+				//re-init
+				for (Transaction transaction : transactionMap.values()){
+					transaction.reinit();
+				}
 				
 				System.out.println("END OF CYLCE\n\n");
 				

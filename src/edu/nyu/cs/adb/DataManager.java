@@ -318,7 +318,6 @@ public final class DataManager {
 					
 					// Safely add transaction
 					readWriteTransactions.add(transactionID);
-					System.out.println("Transaction debug 1: "+readOnlyTransactions+" \n"+readWriteTransactions);
 
 					// Send success message back to the transaction manager
 					Response.Builder responseBuilder = 
@@ -345,7 +344,6 @@ public final class DataManager {
 					
 					// Safely add transaction
 					readOnlyTransactions.put(transactionID, currentTime);
-					System.out.println("Transaction debug 2: "+readOnlyTransactions+" \n"+readWriteTransactions);
 
 					// Send success message back to the transaction manager
 					Response.Builder responseBuilder = 

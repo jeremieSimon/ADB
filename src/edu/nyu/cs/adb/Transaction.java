@@ -45,6 +45,10 @@ public final class Transaction {
 	private ArrayList <Lock> locksHold = new ArrayList <Lock>();
 	private ArrayList <Lock> locksWait = new ArrayList <Lock>();
 	
+	//Variables used in sendResponse
+	private boolean isFailed = false;
+	private boolean isLocked = false;
+	private boolean isResponse = false;
 	
 	/**
 	 * 
@@ -83,20 +87,24 @@ public final class Transaction {
 		//Prevent adding operation to a Transaction that ended
 		if (status != Status.END && status != Status.ABORTED){
 			
-			//On Dump: 		
-			if (operation.getOperationID() == Operation.Opcode.DUMP){
-				//TODO...
-			}
 			//On End: 
-			else if (operation.getOperationID() == Operation.Opcode.FINISH){
+			if (operation.getOperationID() == Operation.Opcode.FINISH){
 				operations.add(operation);
+				status = Status.END;
+				//TODO the rest
 			}
 			//On WRITE, READ or BEGIN: 
-			operations.add(operation);
-			//init operation index
-			if (operations.size() == 1){
-				operationIndex = 0; 
-				status = Status.ACTIVE;
+			else{
+				operations.add(operation);
+			
+				//init operation index
+				if (operations.size() == 1)
+					operationIndex = 0; 
+							
+				//ON R or W: 
+				if (operation.getOperationID() == Operation.Opcode.READ || operation.getOperationID() == Operation.Opcode.WRITE){
+					status = Status.ACTIVE;
+				}
 			}
 	
 
@@ -109,21 +117,47 @@ public final class Transaction {
 	 * @param response
 	 */
 	void sendResponse(Response response){
-		if (response.getStatus() == Response.Status.SUCCESS){
+		
+		isResponse = true;
+		
+		if (response.getStatus() == Response.Status.LOCKED)
+			isLocked = true; 
+		
+		else if (response.getStatus() == Response.Status.FAILURE)
+			isFailed = true; 
+		
+	}
+	
+	void reinit(){
+		
+		//Operation was a success: 
+		if (!isFailed && !isLocked && isResponse){
 			operationIndex++; 
 			locksWait.clear();
 		}
-		else if (response.getStatus() == Response.Status.LOCKED){
+		
+		//Operation could not succeed because of a lock
+		else if (isLocked && !isFailed && isResponse){
 			status = Status.WAIT; 
+			
 			//Add a lock to locksWait
 			String variableID = operations.get(operationIndex).getVariableID();
 			String lockType = operations.get(operationIndex).getOperationID().toString();
 			locksWait.add(new Lock (variableID, lockType));
 		}
-		else if (response.getStatus() == Response.Status.FAILURE){
+		
+		//Operation failed: 
+		else if (isFailed && isResponse){
+			isFailed = true; 
 			status = Status.ABORTED;
 			locksWait.clear();
 		}
+		
+		//re-init the variables: 
+		isFailed = false; 
+		isLocked = false; 
+		isResponse = false;
+		
 	}
 	
 	/**
@@ -135,16 +169,19 @@ public final class Transaction {
 	void siteFailure (int siteID) {
 		
 		//1. Check if site was used
-		for (Operation operation: operations){
-			if (operation.getSiteID().contains(siteID)){
-				if (operation.getOperationID() == Opcode.WRITE)
-					status = Status.ABORTED; 
-				
-				String var = operation.getVariableID(); 
-				if (variableMap.get(var).size() == 1)
-					status = Status.ABORTED; 
-			}
+		if (status == Status.ACTIVE){
+			for (Operation operation: operations){
+				if (operation.getSiteID().contains(siteID)){
+					if (operation.getOperationID() == Opcode.WRITE)
+						status = Status.ABORTED; 
+					
+					String var = operation.getVariableID(); 
+					if (variableMap.get(var).size() == 1)
+						status = Status.ABORTED; 
+				}
+			}			
 		}
+
 		
 		//2. Update the sitesUP: 
 		sitesUp.remove(siteID);
@@ -159,14 +196,13 @@ public final class Transaction {
 		
 		//1. Transaction gets lock from previous operation
 		if (operationIndex > 0){
-			if (operations.get(operationIndex-1).getOperationID() != Operation.Opcode.DUMP){
+			if (operations.get(operationIndex-1).getOperationID() != Operation.Opcode.BEGIN){
 				 String lockType = operations.get(operationIndex-1).getOperationID().toString();
 				 String variableID = operations.get(operationIndex-1).getVariableID();
 				
 				 locksHold.add(new Lock(variableID, lockType));
 			}
-		}
-		
+		}	
 		return operations.get(operationIndex);
 	}
 
@@ -183,24 +219,43 @@ public final class Transaction {
 	}
 	
 	//GETTER: 
+	public ArrayList <Integer> getSitesConcerned(){
+		
+		//if no operation was added, return null
+		//No sites are concerned by the operation
+		//Then no site will ask for the next operation
+		if (operationIndex >= operations.size())
+			return new ArrayList <Integer>();
+		
+		//All sites are concerned
+		else if (status == Status.IDLE)
+			return sitesUp;
+		
+		//No site is concerned: 
+		else if (status == Status.ABORTED || status == Status.END){
+			return new ArrayList <Integer>();
+		}
+		
+		//Transaction is Active: 
+		else{
+			//See if variable is replicated or not
+			Integer variableID = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
+			if (variableID %2 != 0)
+				sitesConcerned = (variableMap.get(operations.get(operationIndex).getVariableID()));
+		
+			if (sitesConcerned.size() == 1)
+				return sitesConcerned;
+			else
+				return sitesUp;
+		}
+	}
+	
 	public String getTransactionID(){
 		return transactionID; 
 	}
 
 	public ArrayList <Integer> getSitesUp(){
 		return sitesUp; 
-	}
-	
-	public ArrayList <Integer> getSitesConcerned(){
-		
-		Integer variableID = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
-		if (variableID %2 != 0)
-			sitesConcerned = (variableMap.get(operations.get(operationIndex).getVariableID()));
-		
-		if (sitesConcerned.size() == 1)
-			return sitesConcerned;
-		else
-			return sitesUp;
 	}
 	
 	public int getOperationIndex(){
