@@ -506,7 +506,9 @@ public final class DataManager {
 					boolean isReadLocked = false;
 					// See if there are any read locks
 					for (Lock lock : readLocks) {
-						if (lock.getVariableID().equals(variableID)) {
+						if (lock.getVariableID().equals(variableID) 
+								&& !lock.getTransactionID()
+									.equals(transactionID)) {
 							// Tell the Transaction Manager that the 
 							// variable is locked
 							Response.Builder builder = 

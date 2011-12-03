@@ -6,9 +6,7 @@ public class DataManagerDriver {
 	 * @param args
 	 */
 	public static void main(String args[]) {
-		TransactionManager transactionManager 
-			= new TransactionManager(System.in, System.out);
-		DataManager manager = new DataManager(transactionManager, 1);
+		DataManager manager = new DataManager(1);
 		System.out.print(manager.dump());
 		System.out.println(manager.dump("x1"));
 		System.out.println(manager.dump("x2"));
