@@ -90,7 +90,6 @@ public final class Transaction {
 			//On End: 
 			if (operation.getOperationID() == Operation.Opcode.FINISH){
 				operations.add(operation);
-				status = Status.END;
 				//TODO the rest
 			}
 			//On WRITE, READ or BEGIN: 
@@ -203,7 +202,11 @@ public final class Transaction {
 				
 				 locksHold.add(new Lock(variableID, lockType));
 			}
-		}	
+		}
+		//2. if the operation is end, then status of the transaction to end: 
+		if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH)
+			status = Status.END;
+		
 		return operations.get(operationIndex);
 	}
 
