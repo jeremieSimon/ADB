@@ -328,7 +328,7 @@ public final class TransactionManager {
 				
 				//END OF CYCLE: 
 				//Print transactions: 
-				System.out.println("TRANSCTION");
+				System.out.println("TRANSACTION");
 				for (Transaction transaction: transactionMap.values()){
 					System.out.println(transaction);
 				}
@@ -401,6 +401,7 @@ public final class TransactionManager {
 	private HashMap <String, ArrayList<Integer>> createVariableMap(){
 		
 		int NUMBER_OF_SITES = 10; 
+		int NUMBER_OF_VAR = 20;
 		HashMap<String, ArrayList <Integer>> variableMap = new HashMap<String, ArrayList <Integer>>();
 
 		ArrayList <Integer> sites = new ArrayList<Integer> (); 
@@ -408,7 +409,7 @@ public final class TransactionManager {
 			sites.add(i);
 		}
 		
-		for (int i=1; i<20; i++){
+		for (int i=1; i<NUMBER_OF_VAR; i++){
 			if (i%2 == 0){
 			variableMap.put("x"+i, sites);
 			}

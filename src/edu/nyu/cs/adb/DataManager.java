@@ -242,7 +242,7 @@ public final class DataManager {
 	 */
 	ArrayList<Response> update () {
 		// Don't process any messages if the site has failed
-		if (!isActive) return null;
+		if (!isActive) return responses;
 
 		// Don't process any messages if there isn't any
 		if (currentMessage == null) return null;
@@ -588,7 +588,7 @@ public final class DataManager {
 	 */
 	void fail () {
 		isActive = false;
-		
+		System.out.println("FAILRE");
 		// Clear locks and unstable storage
 		readLocks.clear();
 		writeLocks.clear();

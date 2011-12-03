@@ -169,12 +169,13 @@ public final class Transaction {
 	void siteFailure (int siteID) {
 		
 		//1. Check if site was used
-		if (status == Status.ACTIVE){
+		if (status == Status.ACTIVE || status == Status.WAIT){
 			for (Operation operation: operations){
-				if (operation.getSiteID().contains(siteID)){
-					if (operation.getOperationID() == Opcode.WRITE)
+				if (operation.getOperationID() != Operation.Opcode.BEGIN && 
+						operation.getSiteID().contains(siteID)){
+					if (operation.getOperationID() == Opcode.WRITE){
 						status = Status.ABORTED; 
-					
+					}
 					String var = operation.getVariableID(); 
 					if (variableMap.get(var).size() == 1)
 						status = Status.ABORTED; 

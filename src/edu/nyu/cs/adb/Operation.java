@@ -13,8 +13,8 @@ public final class Operation {
 	private final Opcode opcode;
 	private final String variableID;
 	private final int writeValue;
-	private HashMap<String, ArrayList <Integer>> variableMap =createVariableMap();
-	ArrayList <Integer> siteID; 
+	private HashMap<String, ArrayList <Integer>> variableMap = new HashMap <String, ArrayList <Integer>>();
+	ArrayList <Integer> siteID = new ArrayList <Integer>(); 
 	
 	/**
 	 * Operation code values
@@ -46,9 +46,9 @@ public final class Operation {
 		this.transactionID = builder.transactionID;
 		this.variableID = builder.variableID;
 		this.writeValue = builder.writeValue;
-		
+		variableMap = createVariableMap();
 		siteID = variableMap.get(variableID);
-		
+
 	}
 	
 	/**
@@ -207,6 +207,7 @@ public final class Operation {
 	private HashMap <String, ArrayList<Integer>> createVariableMap(){
 		
 		int NUMBER_OF_SITES = 10; 
+		int NUMBER_OF_VAR = 20;
 		HashMap<String, ArrayList <Integer>> variableMap = new HashMap<String, ArrayList <Integer>>();
 
 		ArrayList <Integer> sites = new ArrayList<Integer> (); 
@@ -214,7 +215,7 @@ public final class Operation {
 			sites.add(i);
 		}
 		
-		for (int i=1; i<20; i++){
+		for (int i=1; i<NUMBER_OF_VAR; i++){
 			if (i%2 == 0){
 			variableMap.put("x"+i, sites);
 			}
