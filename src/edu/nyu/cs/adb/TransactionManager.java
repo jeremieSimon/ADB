@@ -334,8 +334,9 @@ public final class TransactionManager {
 				}
 
 				//CREATE MESSAGE builder: 
+				//&& transaction.getStatus() != Transaction.Status.ABORTED
 				for (Transaction transaction: transactionMap.values()){
-					if (transaction.getOperationIndex() != -1 && transaction.getStatus() != Transaction.Status.ABORTED){
+					if (transaction.getOperationIndex() != -1 ){
 						for (Integer site: transaction.getSitesConcerned()){
 							messageBuilders[site-1].addOperation(transaction.getnextOperation());
 						}

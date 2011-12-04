@@ -16,7 +16,6 @@ public class WaitForGraph {
 	private ArrayList <Transaction> transactions = new ArrayList <Transaction>();
 	
 	/**
-	 * 
 	 * @param transaction
 	 */
 	void addNode(Transaction transaction){

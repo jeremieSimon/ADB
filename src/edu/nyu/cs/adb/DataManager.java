@@ -460,7 +460,6 @@ public final class DataManager {
 						readOnlyTransactions.containsKey(transactionID);
 					boolean isReadWrite = 
 						readWriteTransactions.contains(transactionID);
-					System.out.println("Transaction debug: "+readOnlyTransactions+" \n"+readWriteTransactions);
 //					if (!isReadOnly && !isReadWrite) {
 //						throw new AssertionError(
 //								transactionID + " not active");

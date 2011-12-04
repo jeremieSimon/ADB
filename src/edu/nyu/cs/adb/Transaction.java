@@ -50,6 +50,9 @@ public final class Transaction {
 	private boolean isLocked = false;
 	private boolean isResponse = false;
 	
+	//variables used when needs to abort a Transaction: 
+	boolean isAborted = true; 
+	
 	/**
 	 * 
 	 * @param variableMap
@@ -90,7 +93,10 @@ public final class Transaction {
 			//On End: 
 			if (operation.getOperationID() == Operation.Opcode.FINISH){
 				operations.add(operation);
-				//TODO the rest
+				//if the operation is end, then status of the transaction to end: 
+				if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
+					status = Status.END;
+				}
 			}
 			//On WRITE, READ or BEGIN: 
 			else{
@@ -105,8 +111,17 @@ public final class Transaction {
 					status = Status.ACTIVE;
 				}
 			}
-	
-
+		}
+		else if (status == Status.ABORTED && isAborted){
+			System.out.println("debug");
+			Operation.Builder builder = 
+					new Operation.Builder(Opcode.ABORT);
+				builder.setTransactionID(transactionID);
+				Operation abort = builder.build();
+				operations.clear();
+				operations.add(abort);
+				operationIndex = 0;
+				isAborted = false;
 		}
 	}
 	/**
@@ -199,28 +214,14 @@ public final class Transaction {
 			if (operations.get(operationIndex-1).getOperationID() != Operation.Opcode.BEGIN){
 				 String lockType = operations.get(operationIndex-1).getOperationID().toString();
 				 String variableID = operations.get(operationIndex-1).getVariableID();
-				
 				 locksHold.add(new Lock(variableID, lockType));
 			}
 		}
-		//2. if the operation is end, then status of the transaction to end: 
-		if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH)
-			status = Status.END;
+
 		
 		return operations.get(operationIndex);
 	}
 
-	/**
-	 * 1. A transaction cannot commit if a site that stores a 
-	 * unique variable failed during execution.
-	 * @return True or False
-	 */
-	boolean isTransactionCorrect () {
-		if (status == Status.ABORTED)
-			return false;
-		else
-			return true; 
-	}
 	
 	//GETTER: 
 	public ArrayList <Integer> getSitesConcerned(){
@@ -237,7 +238,8 @@ public final class Transaction {
 		
 		//No site is concerned: 
 		else if (status == Status.ABORTED || status == Status.END){
-			return new ArrayList <Integer>();
+			System.out.println("end....");
+			return sitesUp;
 		}
 		
 		//Transaction is Active: 

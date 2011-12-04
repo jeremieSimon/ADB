@@ -138,7 +138,7 @@ public final class Operation {
 	 * @return The variable ID
 	 */
 	public String getVariableID () {
-		if (this.opcode != Opcode.READ && this.opcode != Opcode.WRITE) {
+		if (this.opcode != Opcode.READ && this.opcode != Opcode.WRITE && this.opcode != Opcode.FINISH) {
 			throw new UnsupportedOperationException("Not a read or " +
 					"write operation");
 		}
