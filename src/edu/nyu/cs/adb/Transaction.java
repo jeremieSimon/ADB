@@ -256,7 +256,6 @@ public final class Transaction {
 			}
 
 			else{
-				System.out.println("sitesUP");
 				return sitesUp;
 			}
 		}
