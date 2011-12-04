@@ -410,6 +410,38 @@ public final class DataManager {
 					String transactionID = operation.getTransactionID();
 					String variableID = operation.getVariableID();
 					
+					// If the variable is non-replicated, then go ahead and 
+					// send the read value.
+					if (variableID.equals("x1") 
+							|| variableID.equals("x3")
+							|| variableID.equals("x5") 
+							|| variableID.equals("x7") 
+							|| variableID.equals("x9")
+							|| variableID.equals("x11")
+							|| variableID.equals("x13")
+							|| variableID.equals("x15")
+							|| variableID.equals("x17")
+							|| variableID.equals("x19") ) {
+						int readValue;
+						if (unstableStorage.containsKey(variableID)) {
+							readValue = unstableStorage.get(variableID)
+								.intValue();
+						}
+						else {
+							readValue = stableStorage.get(variableID).get(0)
+								.getValue();
+						}
+						// Create and send success response
+						Response.Builder responseBuilder = 
+							new Response.Builder(siteID, Status.SUCCESS);
+						responseBuilder.setTransactionID(transactionID);
+						responseBuilder.setReadValue(readValue);
+						Response success = responseBuilder.build();
+						responses.add(success);
+						// Don't do anything else with this operation
+						break;
+					}
+					
 					// Fail if variable is not written in unstable storage
 					if (!unstableStorage.containsKey(variableID)) {
 						// Create and send failure response
