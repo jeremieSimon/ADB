@@ -9,6 +9,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -219,6 +221,10 @@ public final class TransactionManager {
 						// If there are no arguments, print out the committed 
 						// values of all variables at all sites, sorted per
 						// site.
+						
+						System.out.println("DUMP__");
+
+						
 						if (arg.length() == 0) {
 							for (DataManager dm : dataManagers) {
 								output.print(dm.dump());
@@ -270,6 +276,8 @@ public final class TransactionManager {
 						
 						int siteID = Integer.parseInt(args[0]);
 						
+						System.out.println("Site failure "+siteID);
+						
 						//0. remove site from sitesUp: 
 						sitesUp.remove(sitesUp.indexOf(siteID));
 						//1. site failure: 	
@@ -292,7 +300,14 @@ public final class TransactionManager {
 						int siteID = Integer.parseInt(args[0]);
 						
 						//add site to sitesUp: 
+						//There is no site 0, then site must be added at index of siteID-1
 						sitesUp.add(siteID);
+						Collections.sort(sitesUp);
+											
+						//iterate over all transaction and notify that site is up: 
+						for (Transaction transaction: transactionMap.values()){
+							transaction.siteRecover(siteID);
+						}
 						
 						
 						if (siteID <= 0 || siteID > dataManagers.size()) {

@@ -1,6 +1,7 @@
 	package edu.nyu.cs.adb;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -208,24 +209,58 @@ public final class Transaction {
 	 */
 	void siteFailure (int siteID) {
 		
-		//1. Check if site was used only if T is Active or Wait
+		// if T is Active or Wait: 
 		if (status == Status.ACTIVE || status == Status.WAIT){
 			for (Operation operation: operations){
+				//Check if site that failed was used previously 
 				if (operation.getOperationID() != Operation.Opcode.BEGIN && 
 						operation.getSiteID().contains(siteID)){
+					//If var was updated and var is on replicated site
 					if (operation.getOperationID() == Opcode.WRITE){
 						status = Status.ABORTED; 
 					}
-					String var = operation.getVariableID(); 
-					if (variableMap.get(var).size() == 1)
-						status = Status.ABORTED; 
+					String variableID = operation.getVariableID(); 
+					//If var was read or write on non-replicated site
+					if (variableMap.get(variableID).size() == 1){
+						//if var was updated
+						if (operation.getOperationID() == Opcode.WRITE)
+							status = Status.ABORTED; 
+						//if var was just read, then lock disapear
+						else if (operation.getOperationID() == Opcode.READ){
+							String lockType = "READ";
+							Lock lock = new Lock (variableID, lockType);
+							locksWait.remove(lock);
+						}
+					}
 				}
 			}			
 		}
+		
 		//2. Update the sitesUP: 
 		sitesUp.remove(sitesUp.indexOf(siteID));
 	}
 	
+	/**
+	 * Case 1. If no operations ever wrote, then site is added to the list
+	 * @param siteID
+	 */
+	void siteRecover(int siteID){
+		
+		boolean isWriteOperations = false; 
+		//iter on all operations: 
+		for (Operation operation: operations){
+			//Check if there exist WRITE operation: 
+			if (operation.getOperationID() == Operation.Opcode.WRITE){
+				isWriteOperations = true;
+			}
+		}
+		
+		//then add the site to the list of the sites up: 
+		if (!isWriteOperations){
+			sitesUp.add(siteID);
+			Collections.sort(sitesUp);
+		}
+	}
 	
 	/**
 	 * Function called by TM at the end of each cycle. 
@@ -319,6 +354,7 @@ public final class Transaction {
 		}
 		s+="lock hold "+locksHold;
 		s+="\nlock wait "+locksWait;
+		s+="\nSites Up: "+sitesUp;
 		return s;
 	}
 

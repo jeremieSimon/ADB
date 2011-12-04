@@ -623,7 +623,6 @@ public final class DataManager {
 	 */
 	void fail () {
 		isActive = false;
-		System.out.println("FAILRE");
 		// Clear locks and unstable storage
 		readLocks.clear();
 		writeLocks.clear();
