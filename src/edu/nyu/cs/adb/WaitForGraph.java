@@ -4,14 +4,21 @@ import java.util.HashMap;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
-
-
 public class WaitForGraph {
+
+	/**
+	 *An instance of Wait For Graph is created by the transaction manager
+	 *If 2 or more transactions are waiting then waitForGraph is being called
+	 *Build a new graph at each call 
+	 */
 	
 	private HashMap <String, ArrayList <String>> waitForGraph = new HashMap <String ,ArrayList <String>> ();
-	//private ArrayList <Node> graph = new ArrayList <Node>();
 	private ArrayList <Transaction> transactions = new ArrayList <Transaction>();
 	
+	/**
+	 * 
+	 * @param transaction
+	 */
 	void addNode(Transaction transaction){
 
 		transactions.add(transaction);
@@ -40,6 +47,10 @@ public class WaitForGraph {
 		
 	}
 	
+	/**
+	 * 
+	 * @param nodeID
+	 */
 	void removeNode(String nodeID){
 		System.out.println("Remove "+nodeID);
 		waitForGraph.remove(nodeID);
@@ -111,6 +122,10 @@ public class WaitForGraph {
 		
 	}
 	
+	/**
+	 * @return transactionIDs that were removed. List is empty if no transaction 
+	 * were removed
+	 */
 	public ArrayList <String> removeDeadlock(){
 		ArrayList <String> cycle = new  ArrayList <String>(); 
 		ArrayList <String> nodeRemoved = new ArrayList <String>();
