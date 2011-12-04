@@ -66,7 +66,7 @@ public final class Transaction {
 
 		this.variableMap = variableMap; 
 		this.transactionID = transactionID; 
-		this.sitesUp = sitesUp; 
+		this.sitesUp = (ArrayList<Integer>) sitesUp.clone(); 
 		//sitesConcerned = (ArrayList<Integer>) this.sitesUp.clone();
 		operationIndex = -1; 
 		status = Status.IDLE; 
@@ -176,8 +176,7 @@ public final class Transaction {
 		//re-init the variables: 
 		isFailed = false; 
 		isLocked = false; 
-		isResponse = false;
-		
+		isResponse = false;		
 	}
 	
 	/**
@@ -203,8 +202,9 @@ public final class Transaction {
 			}			
 		}
 		//2. Update the sitesUP: 
-		sitesUp.remove(siteID);
+		sitesUp.remove(sitesUp.indexOf(siteID));
 	}
+	
 	
 	/**
 	 * Function called by TM at the end of each cycle. 

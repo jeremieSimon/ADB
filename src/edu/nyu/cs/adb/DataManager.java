@@ -241,8 +241,7 @@ public final class DataManager {
 	 * timestep.
 	 */
 	ArrayList<Response> update () {
-		// Don't process any messages if the site has failed
-		
+		// Don't process any messages if the site has failed	
 		if (!isActive) return responses;
 
 		// Don't process any messages if there isn't any
