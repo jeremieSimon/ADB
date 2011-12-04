@@ -176,9 +176,17 @@ public final class Transaction {
 			status = Status.WAIT; 
 			
 			//Add a lock to locksWait
+			boolean isLock = false; 
 			String variableID = operations.get(operationIndex).getVariableID();
 			String lockType = operations.get(operationIndex).getOperationID().toString();
-			locksWait.add(new Lock (variableID, lockType));
+			Lock lock = new Lock (variableID, lockType); 
+			for (Lock l: locksWait){
+				if (l.equals(lock)){
+					isLock = true;
+				}
+			}
+			if (!isLock)
+				locksWait.add(new Lock (variableID, lockType));
 		}
 		
 		//Operation failed: 
