@@ -123,12 +123,8 @@ public final class Transaction {
 		}
 		//On abort: 
 		else if (status == Status.ABORTED && isAborted){
-			Operation.Builder builder = 
-					new Operation.Builder(Opcode.ABORT);
-			builder.setTransactionID(transactionID);
-			Operation abort = builder.build();
 			operations.clear();
-			operations.add(abort);
+			operations.add(operation);
 			operationIndex = 0;
 			
 			//release all locks: 

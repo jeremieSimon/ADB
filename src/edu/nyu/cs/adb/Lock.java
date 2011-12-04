@@ -1,9 +1,7 @@
 package edu.nyu.cs.adb;
 
 public class Lock {
-	
 
-	
 	private String variableID; 
 	private String lockType; 
 	
@@ -19,6 +17,19 @@ public class Lock {
 
 	public String getLockType() {
 		return lockType;
+	}
+	
+	/**
+	 * Compare locks between each other 
+	 * @param lock
+	 * @return true if both the type and the variableID are the same
+	 */
+	public boolean equals(Lock lock){
+		if (lock.getLockType().compareTo(this.lockType) == 0 &&
+				lock.getVariableID().compareTo(this.variableID) == 0){
+			return true;
+		}
+		return false; 
 	}
 	
 	@Override
