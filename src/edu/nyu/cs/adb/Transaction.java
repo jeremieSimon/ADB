@@ -2,7 +2,9 @@
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 import edu.nyu.cs.adb.Operation.Opcode;
 
@@ -44,8 +46,8 @@ public final class Transaction {
 	
 	//Variables use to know what lock the transaction is holding 
 	//and waiting for 
-	private ArrayList <Lock> locksHold = new ArrayList <Lock>();
-	private ArrayList <Lock> locksWait = new ArrayList <Lock>();
+	private Set <Lock> locksHold = new HashSet <Lock>();
+	private Set <Lock> locksWait = new HashSet <Lock>();
 	
 	//Variables used in sendResponse
 	private boolean isFailed = false;
@@ -87,7 +89,7 @@ public final class Transaction {
 	 */
 	void addOperations (Operation operation) {
 	
-		//Operation types can be W, R, End or Dump
+		//Operation types can be W, R, End
 		
 		//Prevent adding operation to a Transaction that ended
 		if (status != Status.END && status != Status.ABORTED){
@@ -98,13 +100,18 @@ public final class Transaction {
 				//if the operation is end, then status of the transaction to end: 
 				if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
 					status = Status.END;
+					
+					//release all locks: 
+					locksHold.clear();
+					locksWait.clear();
 				}
 			}
-			//On WRITE, READ or BEGIN: 
+			//On WRITE, READ: 
 			else{
 				operations.add(operation);
 			
-				//init operation index
+				//if this is the first operation added: 
+				//Init the pointer operationIndex
 				if (operations.size() == 1)
 					operationIndex = 0; 
 							
@@ -123,6 +130,10 @@ public final class Transaction {
 			operations.clear();
 			operations.add(abort);
 			operationIndex = 0;
+			
+			//release all locks: 
+			locksHold.clear();
+			locksWait.clear();
 		}
 	}
 	
@@ -136,11 +147,13 @@ public final class Transaction {
 		
 		isResponse = true;
 		
-		if (response.getStatus() == Response.Status.LOCKED)
+		if (response.getStatus() == Response.Status.LOCKED){
 			isLocked = true; 
+		}
 		
-		else if (response.getStatus() == Response.Status.FAILURE)
+		else if (response.getStatus() == Response.Status.FAILURE){
 			isFailed = true; 
+		}
 		
 	}
 	
@@ -152,6 +165,12 @@ public final class Transaction {
 		
 		//Operation was a success: 
 		if (!isFailed && !isLocked && isResponse){
+			if (operationIndex > 0 && (operations.get(operationIndex).getOperationID() == Operation.Opcode.READ ||
+					operations.get(operationIndex).getOperationID() == Operation.Opcode.WRITE)){
+				 String lockType = operations.get(operationIndex).getOperationID().toString();
+				 String variableID = operations.get(operationIndex).getVariableID();
+				 locksHold.add(new Lock(variableID, lockType));
+			}
 			operationIndex++; 
 			locksWait.clear();
 		}
@@ -167,10 +186,12 @@ public final class Transaction {
 		}
 		
 		//Operation failed: 
+		//Release all locks
 		else if (isFailed && isResponse){
 			isFailed = true; 
 			status = Status.ABORTED;
 			locksWait.clear();
+			locksHold.clear();
 		}
 		
 		//re-init the variables: 
@@ -213,14 +234,6 @@ public final class Transaction {
 	 */
 	Operation getnextOperation() {	
 		
-		//1. Transaction gets lock from previous operation
-		if (operationIndex > 0){
-			if (operations.get(operationIndex-1).getOperationID() != Operation.Opcode.BEGIN){
-				 String lockType = operations.get(operationIndex-1).getOperationID().toString();
-				 String variableID = operations.get(operationIndex-1).getVariableID();
-				 locksHold.add(new Lock(variableID, lockType));
-			}
-		}
 		return operations.get(operationIndex);
 	}
 
@@ -277,11 +290,11 @@ public final class Transaction {
 		return status;
 	}
 
-	public ArrayList <Lock> getLocksHold(){
+	public Set <Lock> getLocksHold(){
 		return locksHold;
 	}
 	
-	public ArrayList <Lock> getLocksWait(){
+	public Set <Lock> getLocksWait(){
 		return locksWait;
 	}
 	
@@ -304,6 +317,8 @@ public final class Transaction {
 		for (Operation operation: operations){
 			s+=operation+"\n";
 		}
+		s+="lock hold "+locksHold;
+		s+="\nlock wait "+locksWait;
 		return s;
 	}
 

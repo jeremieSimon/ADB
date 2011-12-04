@@ -20,6 +20,14 @@ public class Lock {
 	public String getLockType() {
 		return lockType;
 	}
+	
+	@Override
+	public String toString(){
+		String s = "";
+		s+="Var: "+variableID;
+		s+="\nType: "+lockType;
+		return s;
+	}
 
 	
 	
