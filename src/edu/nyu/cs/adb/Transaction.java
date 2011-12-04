@@ -208,7 +208,7 @@ public final class Transaction {
 	 */
 	void siteFailure (int siteID) {
 		
-		//1. Check if site was used
+		//1. Check if site was used only if T is Active or Wait
 		if (status == Status.ACTIVE || status == Status.WAIT){
 			for (Operation operation: operations){
 				if (operation.getOperationID() != Operation.Opcode.BEGIN && 

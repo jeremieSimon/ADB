@@ -24,18 +24,22 @@ public final class TransactionManager {
 	private final List<DataManager> dataManagers = 
 		new ArrayList<DataManager>();
 	
-	private final int numberOfSites = 10; 
+	//Variables used to create the variableMap: 
+	private final int NUMBER_OF_SITES = 10; 
+	private final int NUMBER_OF_VAR = 20;
+	
 	private final BufferedReader input;
 	private final PrintStream output;
 	private HashMap <String, ArrayList<Integer>> variableMap;
 	private HashMap <String, Transaction> transactionMap; 
 	private ArrayList <Integer> sitesUp = new ArrayList <Integer>(); 
-	private Message.Builder[] messageBuilders = new Message.Builder [numberOfSites]; 	
-	private Message[] messages = new Message [numberOfSites];
-	//private ArrayList <Response> responses = new ArrayList <Response>();
-	private ArrayList <Response>[] siteResponses = new ArrayList [numberOfSites];
+	private Message.Builder[] messageBuilders = new Message.Builder [NUMBER_OF_SITES]; 	
+	private Message[] messages = new Message [NUMBER_OF_SITES];
+	private ArrayList <Response>[] siteResponses = new ArrayList [NUMBER_OF_SITES];
 	private int age = 0; 
 
+
+	
 	/**
 	 * This is the constructor, with additional functionality
 	 * <ol>
@@ -75,37 +79,13 @@ public final class TransactionManager {
 		this.init();
 		run();
 	}
-	
-	/**
-	 * This is the constructor, with additional functionality
-	 * <ol>
-	 * <li>Create all sites, a site is a DM object</li>
-	 * <li>Assign each variable to the proper site</li>
-	 * <li>Create a variable map, that is a map where each key is a variable 
-	 * and the value would be a linked list where each node would be a site
-	 * </li>
-	 * <li>Create an instance of Wait-For-Graph</li>
-	 * </ol>
-	 * @param in the input stream
-	 * @param out the output stream
-	 */
-	TransactionManager (InputStream in, PrintStream out) {
-		// Set up reading and writing mechanisms
-		InputStreamReader tempreader = new InputStreamReader(in);
-		this.input = new BufferedReader(tempreader);
-		this.output = out;
 		
-		this.init();
-
-		
-	}
-	
 	/**
 	 * Constructor's helper function
 	 */
 	private void init () {
 		// Make data managers
-		for (int siteID = 1; siteID <= numberOfSites; siteID++) {
+		for (int siteID = 1; siteID <= NUMBER_OF_SITES; siteID++) {
 			dataManagers.add(new DataManager(siteID));
 			sitesUp.add(siteID);
 		}
@@ -115,7 +95,7 @@ public final class TransactionManager {
 		transactionMap =  new HashMap <String, Transaction>(); 
 		
 		//init the messages: 
-		for (int i=0; i<numberOfSites; i++){
+		for (int i=0; i<NUMBER_OF_SITES; i++){
 			messageBuilders[i] = new Message.Builder(); 
 		}
 	}
@@ -314,6 +294,7 @@ public final class TransactionManager {
 						//add site to sitesUp: 
 						sitesUp.add(siteID);
 						
+						
 						if (siteID <= 0 || siteID > dataManagers.size()) {
 							throw new AssertionError("Site " + siteID 
 									+ " does not exist");
@@ -365,7 +346,6 @@ public final class TransactionManager {
 				System.out.println("END OF CYLCE\n\n");
 				
 
-				
 				// Read the next line
 				currentLine = input.readLine();
 			}
@@ -376,8 +356,6 @@ public final class TransactionManager {
 	}
 	
 	
-	
-	
 	/**
 	 * Create a variable map, that is a map where each key is a variable and 
 	 * the value is an array list where each element is a site
@@ -385,8 +363,6 @@ public final class TransactionManager {
 	 */
 	private HashMap <String, ArrayList<Integer>> createVariableMap(){
 		
-		int NUMBER_OF_SITES = 10; 
-		int NUMBER_OF_VAR = 20;
 		HashMap<String, ArrayList <Integer>> variableMap = new HashMap<String, ArrayList <Integer>>();
 
 		ArrayList <Integer> sites = new ArrayList<Integer> (); 
@@ -422,7 +398,7 @@ public final class TransactionManager {
 	
 	public static void main (String[] args){
 		
-		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest6.txt", "tt.txt");
+		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest3.txt", "tt.txt");
 		
 	}
 }
