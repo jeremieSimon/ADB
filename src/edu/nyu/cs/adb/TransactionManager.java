@@ -283,6 +283,13 @@ public final class TransactionManager {
 						//1. site failure: 	
 						for (Transaction transaction : transactionMap.values()){
 							transaction.siteFailure(siteID);
+							if (transaction.getStatus() == Transaction.Status.ABORTED){
+								Operation.Builder builder = 
+										new Operation.Builder(Opcode.ABORT);
+								builder.setTransactionID(transaction.getTransactionID());
+								Operation abort = builder.build();
+								transaction.addOperations(abort);
+							}
 						}
 						
 						if (siteID <= 0 || siteID > dataManagers.size()) {
@@ -413,7 +420,7 @@ public final class TransactionManager {
 	
 	public static void main (String[] args){
 		
-		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest3.txt", "tt.txt");
+		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest4.txt", "tt.txt");
 		
 	}
 }

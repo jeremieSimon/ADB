@@ -91,7 +91,6 @@ public final class Transaction {
 	void addOperations (Operation operation) {
 	
 		//Operation types can be W, R, End
-		
 		//Prevent adding operation to a Transaction that ended
 		if (status != Status.END && status != Status.ABORTED){
 			
@@ -209,24 +208,28 @@ public final class Transaction {
 	 */
 	void siteFailure (int siteID) {
 		
+		//Only check for operations that were already executed
+		//So all operations before operationIndex
+		
 		// if T is Active or Wait: 
 		if (status == Status.ACTIVE || status == Status.WAIT){
-			for (Operation operation: operations){
+			for (int i = 0; i<operationIndex; i++){
+			//for (Operation operation: operations){
 				//Check if site that failed was used previously 
-				if (operation.getOperationID() != Operation.Opcode.BEGIN && 
-						operation.getSiteID().contains(siteID)){
-					//If var was updated and var is on replicated site
-					if (operation.getOperationID() == Opcode.WRITE){
+				if (operations.get(i).getOperationID() != Operation.Opcode.BEGIN && 
+						operations.get(i).getSiteID().contains(siteID)){
+					//If var was updated on any kind of site
+					if (operations.get(i).getOperationID() == Opcode.WRITE){
 						status = Status.ABORTED; 
 					}
-					String variableID = operation.getVariableID(); 
+					String variableID = operations.get(i).getVariableID(); 
 					//If var was read or write on non-replicated site
 					if (variableMap.get(variableID).size() == 1){
 						//if var was updated
-						if (operation.getOperationID() == Opcode.WRITE)
+						if (operations.get(i).getOperationID() == Opcode.WRITE)
 							status = Status.ABORTED; 
 						//if var was just read, then lock disapear
-						else if (operation.getOperationID() == Opcode.READ){
+						else if (operations.get(i).getOperationID() == Opcode.READ){
 							String lockType = "READ";
 							Lock lock = new Lock (variableID, lockType);
 							locksWait.remove(lock);
@@ -354,7 +357,7 @@ public final class Transaction {
 		}
 		s+="lock hold "+locksHold;
 		s+="\nlock wait "+locksWait;
-		s+="\nSites Up: "+sitesUp;
+		s+="\nSites Up: "+sitesUp+"\n";
 		return s;
 	}
 
