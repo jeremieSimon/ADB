@@ -422,7 +422,7 @@ public final class TransactionManager {
 	
 	public static void main (String[] args){
 		
-		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest1.txt", "tt.txt");
+		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest6.txt", "tt.txt");
 		
 	}
 }
