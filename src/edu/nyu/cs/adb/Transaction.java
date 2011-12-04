@@ -24,7 +24,6 @@ public final class Transaction {
 	 * A transaction is said IDLE, when it starts but has no operation on going
 	 * After a transaction is asked to read or write, a transaction becomes active
 	 */
-	
 	public enum Status{
 		IDLE,
 		ACTIVE, 
@@ -42,6 +41,9 @@ public final class Transaction {
 	private Status status; 
 	private ArrayList <Integer> sitesUp; 
 	private ArrayList <Integer> sitesConcerned; 
+	
+	//Variables use to know what lock the transaction is holding 
+	//and waiting for 
 	private ArrayList <Lock> locksHold = new ArrayList <Lock>();
 	private ArrayList <Lock> locksWait = new ArrayList <Lock>();
 	
@@ -112,18 +114,20 @@ public final class Transaction {
 				}
 			}
 		}
+		//On abort: 
 		else if (status == Status.ABORTED && isAborted){
 			System.out.println("debug");
 			Operation.Builder builder = 
 					new Operation.Builder(Opcode.ABORT);
-				builder.setTransactionID(transactionID);
-				Operation abort = builder.build();
-				operations.clear();
-				operations.add(abort);
-				operationIndex = 0;
-				isAborted = false;
+			builder.setTransactionID(transactionID);
+			Operation abort = builder.build();
+			operations.clear();
+			operations.add(abort);
+			operationIndex = 0;
+			isAborted = false;
 		}
 	}
+	
 	/**
 	 * 1. If response is success, increment the counter
 	 * 2. If response is lock, wait, keep the operation for the next cycle 
@@ -142,6 +146,10 @@ public final class Transaction {
 		
 	}
 	
+	/**
+	 * This function is called by the TM at the end of each cycle. 
+	 * It re-init some variables
+	 */
 	void reinit(){
 		
 		//Operation was a success: 
@@ -196,8 +204,6 @@ public final class Transaction {
 				}
 			}			
 		}
-
-		
 		//2. Update the sitesUP: 
 		sitesUp.remove(siteID);
 	}
@@ -217,15 +223,12 @@ public final class Transaction {
 				 locksHold.add(new Lock(variableID, lockType));
 			}
 		}
-
-		
 		return operations.get(operationIndex);
 	}
 
 	
 	//GETTER: 
 	public ArrayList <Integer> getSitesConcerned(){
-		
 		//if no operation was added, return null
 		//No sites are concerned by the operation
 		//Then no site will ask for the next operation
@@ -289,6 +292,7 @@ public final class Transaction {
 	public void addLocksWait(Lock lock){
 		locksWait.add(lock);
 	}
+	
 	
 	@Override
 	public String toString()
