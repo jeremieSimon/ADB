@@ -364,23 +364,7 @@ public final class TransactionManager {
 				
 				System.out.println("END OF CYLCE\n\n");
 				
-				// Now that the input has been processed, send messages
-				
-				// Sample Message generation code
-				Operation.Builder beginOperationBuilder = 
-					new Operation.Builder(Opcode.BEGIN);
-				beginOperationBuilder.setTransactionID("T1");
-				Operation beginT1 = 
-					beginOperationBuilder.build();
-				
-				Message.Builder messageBuilder = new Message.Builder();
-				messageBuilder.addOperation(beginT1);
-				Message message = messageBuilder.build();
-				
-				// Update the data sites
-				for (DataManager site : dataManagers) {
-					site.update();
-				}
+
 				
 				// Read the next line
 				currentLine = input.readLine();

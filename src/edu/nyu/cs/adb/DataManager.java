@@ -18,7 +18,7 @@ import edu.nyu.cs.adb.Response.Status;
  * @author dandelarosa
  */
 public final class DataManager {
-	//private final TransactionManager transactionManager;
+	
 	private ArrayList <Response> responses = new ArrayList <Response>();
 	private final int siteID;
 	private int currentTime = 0;
@@ -242,6 +242,7 @@ public final class DataManager {
 	 */
 	ArrayList<Response> update () {
 		// Don't process any messages if the site has failed
+		
 		if (!isActive) return responses;
 
 		// Don't process any messages if there isn't any
@@ -251,6 +252,7 @@ public final class DataManager {
 			switch (operation.getOperationID()) {
 				case ABORT:
 				{
+					
 					String transactionID = operation.getTransactionID();
 					
 					// Check if the transaction is active
@@ -262,7 +264,7 @@ public final class DataManager {
 						throw new AssertionError(
 								transactionID + " not active");
 					}
-					
+										
 					// Release read locks
 					Iterator<Lock> rit = readLocks.iterator();
                     while (rit.hasNext()) {
@@ -271,7 +273,6 @@ public final class DataManager {
                     		rit.remove();
                     	}
 					}
-					
 					// Release write locks
 					Set<String> variableIDs = 
 						new HashSet<String>(writeLocks.keySet());
@@ -280,6 +281,8 @@ public final class DataManager {
 							writeLocks.remove(variableID);
 						}
 					}
+					
+
 					
 					// Apply before image to the database
 					Map<String, Integer> beforeImage 

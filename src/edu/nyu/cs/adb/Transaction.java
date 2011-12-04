@@ -40,7 +40,7 @@ public final class Transaction {
 	private int age; 
 	private Status status; 
 	private ArrayList <Integer> sitesUp; 
-	private ArrayList <Integer> sitesConcerned; 
+	private ArrayList <Integer> sitesConcerned = new ArrayList <Integer>(); 
 	
 	//Variables use to know what lock the transaction is holding 
 	//and waiting for 
@@ -67,7 +67,7 @@ public final class Transaction {
 		this.variableMap = variableMap; 
 		this.transactionID = transactionID; 
 		this.sitesUp = sitesUp; 
-		sitesConcerned = (ArrayList<Integer>) this.sitesUp.clone();
+		//sitesConcerned = (ArrayList<Integer>) this.sitesUp.clone();
 		operationIndex = -1; 
 		status = Status.IDLE; 
 		this.age = age;
@@ -116,7 +116,6 @@ public final class Transaction {
 		}
 		//On abort: 
 		else if (status == Status.ABORTED && isAborted){
-			System.out.println("debug");
 			Operation.Builder builder = 
 					new Operation.Builder(Opcode.ABORT);
 			builder.setTransactionID(transactionID);
@@ -124,7 +123,6 @@ public final class Transaction {
 			operations.clear();
 			operations.add(abort);
 			operationIndex = 0;
-			isAborted = false;
 		}
 	}
 	
@@ -240,8 +238,11 @@ public final class Transaction {
 			return sitesUp;
 		
 		//No site is concerned: 
-		else if (status == Status.ABORTED || status == Status.END){
-			System.out.println("end....");
+		else if (status == Status.ABORTED && isAborted){
+			isAborted = false;
+			return sitesUp;
+		}
+		else if  (status == Status.END){
 			return sitesUp;
 		}
 		
@@ -249,13 +250,15 @@ public final class Transaction {
 		else{
 			//See if variable is replicated or not
 			Integer variableID = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
-			if (variableID %2 != 0)
+			if (variableID %2 != 0){
 				sitesConcerned = (variableMap.get(operations.get(operationIndex).getVariableID()));
-		
-			if (sitesConcerned.size() == 1)
 				return sitesConcerned;
-			else
+			}
+
+			else{
+				System.out.println("sitesUP");
 				return sitesUp;
+			}
 		}
 	}
 	
