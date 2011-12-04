@@ -1,135 +1,135 @@
 package edu.nyu.cs.adb;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 
-/**
- * A data structure used to detect deadlocks.
- * <br>This class is a singleton. 
- * <br>When an instance is created, it creates the structure.
- * @author dandelarosa
- */
-public final class WaitForGraph {
 
+
+public class WaitForGraph {
+	
+	private HashMap <String, ArrayList <String>> waitForGraph = new HashMap <String ,ArrayList <String>> ();
+	//private ArrayList <Node> graph = new ArrayList <Node>();
 	private ArrayList <Transaction> transactions = new ArrayList <Transaction>();
-	private HashMap <Transaction, HashSet <String>> waitForGraph = new HashMap <Transaction, HashSet <String>>();
+	
+	void addNode(Transaction transaction){
 
-	
-	/**
-	 * This function is called when a transaction is waiting. 
-	 * @param transaction Transaction
-	 */
-	void addTransaction (Transaction transaction) {
+		transactions.add(transaction);
 		
-		//If transaction is already here, update the transaction
-		if (transactions.contains(transaction.getTransactionID())){
-			updateTransaction(transaction);
-		}
-		else{
-			transactions.add(transaction);
+		//Build node
+		String id = transaction.getTransactionID(); 
+		ArrayList <String> edges = new ArrayList <String>();
 		
-			if (waitForGraph.isEmpty()){
-				waitForGraph.put(transaction, null);
+		//check dependencies
+		if (transaction.getStatus() == Transaction.Status.WAIT){
+			ArrayList <String> variables = new ArrayList <String>();
+			ArrayList <Lock> waitLock = transaction.getLocksWait();
+			for (Lock w: waitLock){
+				variables.add(w.getVariableID());
 			}
-			else{
-				//waitForGraph.put(transaction, null);
-				updateTransaction(transaction);
-			}
-		}
-	}
-	
-	
-	/**
-	 * A transaction might acquire new locks while
-	 * other are waiting. We wanna keep updating the transaction
-	 * @param transaction
-	 */
-	private void updateTransaction(Transaction transaction){
-		ArrayList <String> variables = new ArrayList <String>();
-		HashSet <String> edges = new HashSet <String>();
-		for (Lock lock : transaction.getLocksWait()){
-				variables.add(lock.getVariableID());
-		}
-		for (Transaction T: waitForGraph.keySet()){
-			for (Lock lock:  T.getLocksHold()){
-				if (variables.contains(lock.getVariableID())){
-					edges.add(T.getTransactionID());
+			for (Transaction t: transactions){
+				for (Lock lock: t.getLocksHold()){
+					if (lock.getLockType() == "WRITE" && variables.contains(lock.getVariableID())){
+						edges.add(t.getTransactionID());
+					}
 				}
 			}
 		}
-		waitForGraph.put(transaction, edges);
+		waitForGraph.put(id, edges);
+		//graph.add(node);
+		
 	}
 	
-	/**
-	 * Called when a transaction go from WAIT to ACTIVE or ABORTED 
-	 * @param transaction transaction
-	 */
-	void removeNode (Transaction transaction) {
-		waitForGraph.remove(transaction);
-		
-		//Need to update all graph
-		for (Transaction t: waitForGraph.keySet()){
-			updateTransaction(t);
+	void removeNode(String nodeID){
+		System.out.println("Remove "+nodeID);
+		waitForGraph.remove(nodeID);
+		for (ArrayList <String> n: waitForGraph.values()){
+			if (n.contains(nodeID)){
+				n.remove(n.indexOf(nodeID));
+			}
 		}
 	}
 	
-	/**
-	 * This function will be called by the Transaction Manager.
-	 * <br>This function will be called when transactions have been waiting 
-	 * for too long.
-	 * <br>It runs a breadth First Search to look for cycle.
-	 * <br>If cycle is found, it kills Transaction such that the graph is 
-	 * acyclic
-	 * @return True or False
-	 */
-	void isDeadlock() {
-		//Init: choose node with 
-		ArrayList <Transaction> nodes; 
-	}
-	
-	/**
-	 * This function is called if a deadlock is detected in the graph
-	 * It tells the TM which Transaction to abort
-	 * @return Transaction object
-	 */
-	private Transaction abortTransaction(){
-		return null;
-	}
-	
-	//GETTER: 
-	public HashMap <Transaction, HashSet <String>> getWaitForGraph(){ 
-		return waitForGraph; 
-	}
-	
-	public static void main(String[]args){
+	private ArrayList <String> checkCyle(){
+		HashMap <String, Integer> nodeMap = new HashMap <String, Integer>();
 		
-		WaitForGraph graph = new WaitForGraph(); 
-		Transaction t1 = new Transaction("T1");
-		t1.addLocksHold(new Lock("x1", "WRITE"));
-		t1.addLocksHold(new Lock("x2", "WRITE"));
-		t1.addLocksWait(new Lock("x3", "WRITE"));
+		//Mark all nodes as unread
+		for (String nodeID: waitForGraph.keySet()){
+			nodeMap.put(nodeID, 0);
+		}
 		
-		Transaction t2 = new Transaction("T2");
-		t2.addLocksHold(new Lock("x4", "WRITE"));
-		t2.addLocksWait(new Lock("x1", "READ"));
+		Queue <String> nodeQueue = new ArrayBlockingQueue <String>(waitForGraph.size());
+		Queue <String> pathQueue = new ArrayBlockingQueue <String>(waitForGraph.size());
+		ArrayList <String> cycle = new ArrayList <String>();
+		boolean isCycle = false; 
 		
-		Transaction t3 = new Transaction("T2");
-		t3.addLocksHold(new Lock("x5", "WRITE"));
-		t3.addLocksWait(new Lock("x4", "READ"));
+		//init queue: 
+		for (String nodeID: nodeMap.keySet()){
+			nodeQueue.add(nodeID);
+		}
 		
-		graph.addTransaction(t1);
-		graph.addTransaction(t2);
-		graph.addTransaction(t3);
+		
+		while (!nodeQueue.isEmpty()){
+			String nodeID = nodeQueue.poll();
+			
+			//node not read: 
+			if (nodeMap.get(nodeID) == 0){
+				pathQueue.add(nodeID);
+				
+				//If no cycle in path, then all nodes are marked as safe
+				if (!isCycle){
+					for (String n: cycle){
+						nodeMap.put(n, 2); 
+					}
+				}
+				//reinit: 
+				cycle.clear();
+				isCycle = false; 
 
-		
-		for (HashSet<String> set : graph.getWaitForGraph().values()){
-			System.out.println("Transaction:");
-				System.out.println("s "+set);
+				//Discover all neighbors
+				while (!pathQueue.isEmpty()){
+					String nodePath = pathQueue.poll();
+					System.out.println("Visit "+nodePath);
+					cycle.add(nodePath);
+					ArrayList <String> neighbors = waitForGraph.get(nodePath);
+					if (neighbors.size() > 0)
+						nodeMap.put(nodePath, 1);
+					
+					for (String neighbor : neighbors){
+						//neighbor is not read, add to queue
+						if (nodeMap.get(neighbor) == 0)
+							pathQueue.add(neighbor);
+						else if (nodeMap.get(neighbor) == 1){
+							System.out.println("Cycle detected "+neighbor);
+							return cycle;
+						}
+					}
+				}
+			}
 		}
+		return null;
 		
+	}
+	
+	public ArrayList <String> removeDeadlock(){
+		ArrayList <String> cycle = new  ArrayList <String>(); 
+		ArrayList <String> nodeRemoved = new ArrayList <String>();
+		while (cycle != null){
+			System.out.println("iter");
+			cycle = checkCyle();
+			if (cycle == null)
+				break;
 		
-		
+			//find older node
+			String olderNode = "T0"; 
+			for (String node: cycle){
+				if (node.compareTo(olderNode)<0 ){
+					olderNode = node;
+				}
+			}
+			removeNode(olderNode);
+			nodeRemoved.add(olderNode);
+		}
+		return nodeRemoved;
 	}
 }
