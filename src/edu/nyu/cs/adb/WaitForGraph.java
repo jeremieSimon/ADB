@@ -14,6 +14,7 @@ public class WaitForGraph {
 	 */
 	
 	private HashMap <String, ArrayList <String>> waitForGraph = new HashMap <String ,ArrayList <String>> ();
+	private HashMap <String, Integer> ageMap = new HashMap <String, Integer>();
 	private ArrayList <Transaction> transactions = new ArrayList <Transaction>();
 	
 	/**
@@ -21,6 +22,7 @@ public class WaitForGraph {
 	 */
 	void addNode(Transaction transaction){
 		transactions.add(transaction);	
+		ageMap.put(transaction.getTransactionID(), transaction.getAge());
 	}
 	
 	void init(){
@@ -142,11 +144,14 @@ public class WaitForGraph {
 			if (cycle == null)
 				break;
 		
-			//find older node
+			//find the youngest node
 			String olderNode = "T0"; 
+			int oldest = -1;
 			for (String node: cycle){
-				if (node.compareTo(olderNode)>0 ){
+				if (ageMap.get(node) > oldest){
+				//if (node.compareTo(olderNode)>0 ){
 					olderNode = node;
+					oldest = ageMap.get(node);
 				}
 			}
 			removeNode(olderNode);
@@ -157,19 +162,22 @@ public class WaitForGraph {
 	
 	public static void main (String[] args){
 		
-		Transaction T1 =  new Transaction("T1");
-		Transaction T2 =  new Transaction("T2");
-		Transaction T3 =  new Transaction("T3");
+		Transaction T1 =  new Transaction("T1", 1);
+		Transaction T2 =  new Transaction("T2", 3);
+		Transaction T3 =  new Transaction("T3", 2);
 		
 		T1.addLocksHold(new Lock("x1", "WRITE"));
-		T1.addLocksWait(new Lock("x2", "WRITE"));
+		T1.addLocksWait(new Lock("x3", "WRITE"));
 		T1.setStatus(Transaction.Status.WAIT);
 		
-		//T2.addLocksHold(new Lock("x2", "WRITE"));
+		T2.addLocksHold(new Lock("x2", "WRITE"));
 		T2.addLocksWait(new Lock("x1", "WRITE"));
 		T2.setStatus(Transaction.Status.WAIT);
 
-		T3.addLocksWait(new Lock("x1", "Write"));
+		T3.addLocksHold(new Lock("x3", "WRITE"));
+		T3.addLocksWait(new Lock("x2", "WRITE"));
+		T3.setStatus(Transaction.Status.WAIT);
+
 
 		WaitForGraph g = new WaitForGraph();
 		g.addNode(T1);

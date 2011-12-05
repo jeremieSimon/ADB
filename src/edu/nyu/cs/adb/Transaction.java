@@ -77,8 +77,9 @@ public final class Transaction {
 	}
 	
 	//TO BE REMOVED
-	Transaction(String transactionID){
+	Transaction(String transactionID, int age){
 		this.transactionID = transactionID; 
+		this.age = age;
 	}
 	
 	/**
@@ -334,6 +335,10 @@ public final class Transaction {
 	
 	public Status getStatus(){
 		return status;
+	}
+	
+	public int getAge(){
+		return age;
 	}
 
 	public Set <Lock> getLocksHold(){

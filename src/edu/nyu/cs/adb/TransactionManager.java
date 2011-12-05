@@ -362,6 +362,31 @@ public final class TransactionManager {
 					transaction.reinit();
 				}
 				
+				//Transaction graph: 
+				//if 2 transactions or more are waiting, called graphManager()
+				int numberOfWaitingTransactions = 0;
+				for (Transaction transaction: transactionMap.values()){
+					if (transaction.getStatus() == Transaction.Status.WAIT){
+						numberOfWaitingTransactions++;
+					}
+				}				
+				if (numberOfWaitingTransactions >=2){
+					ArrayList <String> removeList = graphManager();
+					if (removeList.size() >0){
+						for (Transaction transaction: transactionMap.values()){
+							if (removeList.contains(transaction.getTransactionID())){
+								Operation.Builder builder = 
+										new Operation.Builder(Opcode.ABORT);
+								builder.setTransactionID(transaction.getTransactionID());
+								Operation abort = builder.build();
+								transaction.addOperations(abort);
+							}
+						}
+					}
+				}
+					
+					
+					
 				System.out.println("END OF CYLCE\n\n");
 				
 
@@ -405,6 +430,21 @@ public final class TransactionManager {
 		return variableMap; 
 	}
 	
+	/**
+	 * 
+	 */
+	private ArrayList <String> graphManager(){
+		
+		WaitForGraph g = new WaitForGraph();
+		for (Transaction transaction: transactionMap.values()){
+			g.addNode(transaction);
+		}
+		
+		g.init();
+		
+		return g.removeDeadlock();
+		
+	}
 	
 	public static void main (String[] args){
 		
