@@ -398,7 +398,10 @@ public final class TransactionManager {
 			}
 			else{
 				ArrayList <Integer> A = new ArrayList<Integer>(); 
-				A.add(((1+i)%10)); 
+				if (i <=7)
+					A.add(((1+i)%NUMBER_OF_SITES)); 
+				else
+					A.add(((2+i)%NUMBER_OF_SITES));
 				variableMap.put("x"+i, A);
 				}
 		}
@@ -420,7 +423,7 @@ public final class TransactionManager {
 	
 	public static void main (String[] args){
 		
-		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest4.txt", "tt.txt");
+		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest5.txt", "tt.txt");
 		
 	}
 }

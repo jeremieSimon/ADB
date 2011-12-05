@@ -306,8 +306,13 @@ public final class Transaction {
 			//See if variable is replicated or not
 			Integer variableID = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
 			if (variableID %2 != 0){
+				//make sure that the sitesConcerned are up: 
 				sitesConcerned = (variableMap.get(operations.get(operationIndex).getVariableID()));
-				return sitesConcerned;
+				int siteID = sitesConcerned.get(0);
+				if (sitesUp.contains(siteID))
+					return sitesConcerned;
+				else
+					return new ArrayList <Integer>();
 			}
 
 			else{
