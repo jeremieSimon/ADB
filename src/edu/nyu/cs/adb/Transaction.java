@@ -76,6 +76,7 @@ public final class Transaction {
 		this.age = age;
 	}
 	
+	//TO BE REMOVED
 	Transaction(String transactionID){
 		this.transactionID = transactionID; 
 	}
@@ -351,6 +352,11 @@ public final class Transaction {
 	//TO BE REMOVED
 	public void addLocksWait(Lock lock){
 		locksWait.add(lock);
+	}
+	
+	//TO BE REMOVED
+	public void setStatus(Status status){
+		this.status = status;
 	}
 	
 	

@@ -2,6 +2,7 @@ package edu.nyu.cs.adb;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class WaitForGraph {
@@ -19,8 +20,16 @@ public class WaitForGraph {
 	 * @param transaction
 	 */
 	void addNode(Transaction transaction){
-
-		transactions.add(transaction);
+		transactions.add(transaction);	
+	}
+	
+	void init(){
+		for (Transaction transaction: transactions){
+			buildDependencies(transaction);
+		}
+	}
+	
+	private void buildDependencies(Transaction transaction){
 		
 		//Build node
 		String id = transaction.getTransactionID(); 
@@ -29,7 +38,7 @@ public class WaitForGraph {
 		//check dependencies
 		if (transaction.getStatus() == Transaction.Status.WAIT){
 			ArrayList <String> variables = new ArrayList <String>();
-			ArrayList <Lock> waitLock = transaction.getLocksWait();
+			Set<Lock> waitLock = transaction.getLocksWait();
 			for (Lock w: waitLock){
 				variables.add(w.getVariableID());
 			}
@@ -42,8 +51,6 @@ public class WaitForGraph {
 			}
 		}
 		waitForGraph.put(id, edges);
-		//graph.add(node);
-		
 	}
 	
 	/**
@@ -126,6 +133,7 @@ public class WaitForGraph {
 	 * were removed
 	 */
 	public ArrayList <String> removeDeadlock(){
+		
 		ArrayList <String> cycle = new  ArrayList <String>(); 
 		ArrayList <String> nodeRemoved = new ArrayList <String>();
 		while (cycle != null){
@@ -137,7 +145,7 @@ public class WaitForGraph {
 			//find older node
 			String olderNode = "T0"; 
 			for (String node: cycle){
-				if (node.compareTo(olderNode)<0 ){
+				if (node.compareTo(olderNode)>0 ){
 					olderNode = node;
 				}
 			}
@@ -145,5 +153,35 @@ public class WaitForGraph {
 			nodeRemoved.add(olderNode);
 		}
 		return nodeRemoved;
+	}
+	
+	public static void main (String[] args){
+		
+		Transaction T1 =  new Transaction("T1");
+		Transaction T2 =  new Transaction("T2");
+		Transaction T3 =  new Transaction("T3");
+		
+		T1.addLocksHold(new Lock("x1", "WRITE"));
+		T1.addLocksWait(new Lock("x2", "WRITE"));
+		T1.setStatus(Transaction.Status.WAIT);
+		
+		//T2.addLocksHold(new Lock("x2", "WRITE"));
+		T2.addLocksWait(new Lock("x1", "WRITE"));
+		T2.setStatus(Transaction.Status.WAIT);
+
+		T3.addLocksWait(new Lock("x1", "Write"));
+
+		WaitForGraph g = new WaitForGraph();
+		g.addNode(T1);
+		g.addNode(T2);
+		g.addNode(T3);
+		
+		g.init();
+		
+		System.out.println(g.removeDeadlock());
+		
+
+		
+		
 	}
 }
