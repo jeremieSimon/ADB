@@ -1,0 +1,10 @@
+//Test 9
+//Test timeout
+//T1 holds lock but never commit so T2 cannot commit
+//After 20 iterations where T1 is innactive, T1 should be killed
+//release the locks so that T2 can commit
+begin(T1)
+begin(T2)
+W(T1,x2,1)
+W(T2,x2,1)
+end(T2)
