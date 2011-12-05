@@ -140,7 +140,6 @@ public final class Transaction {
 	 * @param response
 	 */
 	void sendResponse(Response response){
-		
 		isResponse = true;
 		
 		if (response.getStatus() == Response.Status.LOCKED){
@@ -150,7 +149,6 @@ public final class Transaction {
 		else if (response.getStatus() == Response.Status.FAILURE){
 			isFailed = true; 
 		}
-		
 	}
 	
 	/**
@@ -275,7 +273,6 @@ public final class Transaction {
 	 * @return operation   
 	 */
 	Operation getnextOperation() {	
-		
 		return operations.get(operationIndex);
 	}
 
@@ -308,6 +305,7 @@ public final class Transaction {
 			if (variableID %2 != 0){
 				//make sure that the sitesConcerned are up: 
 				sitesConcerned = (variableMap.get(operations.get(operationIndex).getVariableID()));
+				System.out.println("Site concerned "+sitesConcerned);
 				int siteID = sitesConcerned.get(0);
 				if (sitesUp.contains(siteID))
 					return sitesConcerned;

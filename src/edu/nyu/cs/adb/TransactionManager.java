@@ -221,13 +221,10 @@ public final class TransactionManager {
 						// If there are no arguments, print out the committed 
 						// values of all variables at all sites, sorted per
 						// site.
-						
-						System.out.println("DUMP__");
-
-						
+												
 						if (arg.length() == 0) {
 							for (DataManager dm : dataManagers) {
-								output.print(dm.dump());
+								System.out.println(dm.dump());
 							}
 						}
 						// dump(xj) gives the committed values of all copies of
@@ -235,7 +232,7 @@ public final class TransactionManager {
 						else if (arg.startsWith("x")) {
 							String variableID = arg;
 							for (DataManager dm : dataManagers) {
-								output.print(dm.dump(variableID));
+								System.out.println(dm.dump(variableID));
 							}
 						}
 						// dump(i) gives the committed values of all copies of 
@@ -248,7 +245,7 @@ public final class TransactionManager {
 							}
 							// Remember that sites are zero-indexed
 							DataManager dm = dataManagers.get(siteID - 1);
-							output.print(dm.dump());
+							System.out.println(dm.dump());
 						}
 					}
 					
@@ -397,29 +394,17 @@ public final class TransactionManager {
 			variableMap.put("x"+i, sites);
 			}
 			else{
-				ArrayList <Integer> A = new ArrayList<Integer>(); 
-				if (i <=7)
-					A.add(((1+i)%NUMBER_OF_SITES)); 
-				else
-					A.add(((2+i)%NUMBER_OF_SITES));
+				ArrayList <Integer> A = new ArrayList<Integer>();
+				if ((i+1)% NUMBER_OF_SITES == 0){
+					A.add(10); }
+				else{
+					A.add(((1+i)%NUMBER_OF_SITES)); }
 				variableMap.put("x"+i, A);
 				}
 		}
 		return variableMap; 
 	}
 	
-
-	
-
-	/**
-	 * Send a response to the Transaction Manager. This intended to be called 
-	 * after a Data Manager has processed the message it received earlier in 
-	 * the timestep.
-	 * @param response The response object
-	 */
-	public void sendResponse (Response response) {
-		// TODO: implement
-	}
 	
 	public static void main (String[] args){
 		
