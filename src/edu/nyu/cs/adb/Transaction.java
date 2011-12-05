@@ -41,6 +41,8 @@ public final class Transaction {
 	private String transactionID; 
 	private int operationIndex;  
 	private int age; 
+	private int timeout = 0; 
+	private final int TIMEOUT_DELAY = 30;
 	private Status status; 
 	private ArrayList <Integer> sitesUp; 
 	private ArrayList <Integer> sitesConcerned = new ArrayList <Integer>(); 
@@ -125,7 +127,10 @@ public final class Transaction {
 		//On abort: 
 		else if (status == Status.ABORTED && isAborted){
 			operations.clear();
-			operations.add(operation);
+			Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
+			builder.setTransactionID(transactionID);
+			Operation abort = builder.build();
+			operations.add(abort);
 			operationIndex = 0;
 			
 			//release all locks: 
@@ -257,7 +262,7 @@ public final class Transaction {
 		boolean isWriteOperations = false; 
 		//iter on all operations: 
 		for (Operation operation: operations){
-			//Check if there exist WRITE operation: 
+			//Check if there exist a WRITE operation: 
 			if (operation.getOperationID() == Operation.Opcode.WRITE){
 				isWriteOperations = true;
 			}
@@ -279,6 +284,7 @@ public final class Transaction {
 		
 		if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
 			status = Status.END;
+			
 			//release all locks: 
 			locksHold.clear();
 			locksWait.clear();
@@ -292,12 +298,22 @@ public final class Transaction {
 		//if no operation was added, return null
 		//No sites are concerned by the operation
 		//Then no site will ask for the next operation
-		if (operationIndex >= operations.size())
+		if (operationIndex >= operations.size()){
+			timeout++;
+			if (timeout>20){
+				operationIndex = 0;
+			}
+			System.out.println("timeout "+timeout);
 			return new ArrayList <Integer>();
+		}
 		
 		//All sites are concerned
-		else if (status == Status.IDLE)
+		else if (status == Status.IDLE){
+			timeout++;
+			if (timeout>20)
+				operationIndex = 0;
 			return sitesUp;
+		}
 		
 		//No site is concerned: 
 		else if (status == Status.ABORTED && isAborted){
@@ -305,12 +321,13 @@ public final class Transaction {
 			return sitesUp;
 		}
 		else if  (status == Status.END){
+			timeout = 0;
 			return sitesUp;
 		}
 		
 		//Transaction is currently Active: 
 		else{
-
+			timeout = 0;
 			if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
 				return sitesUp;
 			}
@@ -319,7 +336,6 @@ public final class Transaction {
 			if (variableID %2 != 0){
 				//make sure that the sitesConcerned are up: 
 				sitesConcerned = (variableMap.get(operations.get(operationIndex).getVariableID()));
-				System.out.println("Site concerned "+sitesConcerned);
 				int siteID = sitesConcerned.get(0);
 				if (sitesUp.contains(siteID))
 					return sitesConcerned;
@@ -376,6 +392,9 @@ public final class Transaction {
 		this.status = status;
 	}
 	
+	public int getTimeout(){
+		return timeout;
+	}
 	
 	@Override
 	public String toString()

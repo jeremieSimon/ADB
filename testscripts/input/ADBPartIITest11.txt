@@ -1,8 +1,8 @@
-// Test 8
+// Test 11
 //
 // Main Test Idea:
 // ---------------
-// Single deadlocks: 
+// multilple deadlocks: 
 // T1 Waits for T2
 // T2 waits for T3 and T4
 // T3 waits for T1
@@ -10,9 +10,12 @@
 // T3 and T4 should be aborted T1 and T2 should end
 begin(T1)
 begin(T2)
-W(T1,x1,1)
-W(T2,x2,1)
+begin(T3)
 W(T1,x2,1)
-W(T2,x1,1)
+W(T2,x4,1)
+W(T3,x6,1)
+W(T3,x2,1)
+W(T1,x6,1)
 end(T1)
 end(T2)
+end(T3)

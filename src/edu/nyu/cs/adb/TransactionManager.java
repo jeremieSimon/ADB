@@ -30,6 +30,12 @@ public final class TransactionManager {
 	private final int NUMBER_OF_SITES = 10; 
 	private final int NUMBER_OF_VAR = 20;
 	
+	//Variable used to ensure that all transactions are over
+	private int numberOfTransactions = 0;
+	private int numberOfTransactionsOver = 0;
+	private int numberOfWaitingTransactions = 0;
+
+	
 	private final BufferedReader input;
 	private final PrintStream output;
 	private HashMap <String, ArrayList<Integer>> variableMap;
@@ -152,6 +158,7 @@ public final class TransactionManager {
 					// begin(T1) says that T1 begins
 					if (opcode.equals("begin")) {
 
+						numberOfTransactions++;
 						String transactionID = args[0];
 						//create a new instance of transaction: 
 						transactionMap.put(transactionID, new Transaction(variableMap, transactionID, sitesUp, age));
@@ -167,6 +174,8 @@ public final class TransactionManager {
 					
 					// beginRO(T3) says that T3 is read-only
 					if (opcode.equals("beginRO")) {
+						
+						numberOfTransactions++;
 						String transactionID = args[0];
 						
 						//create a new instance of transaction: 
@@ -281,8 +290,7 @@ public final class TransactionManager {
 						for (Transaction transaction : transactionMap.values()){
 							transaction.siteFailure(siteID);
 							if (transaction.getStatus() == Transaction.Status.ABORTED){
-								Operation.Builder builder = 
-										new Operation.Builder(Opcode.ABORT);
+								Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 								builder.setTransactionID(transaction.getTransactionID());
 								Operation abort = builder.build();
 								transaction.addOperations(abort);
@@ -290,8 +298,7 @@ public final class TransactionManager {
 						}
 						
 						if (siteID <= 0 || siteID > dataManagers.size()) {
-							throw new AssertionError("Site " + siteID 
-									+ " does not exist");
+							throw new AssertionError("Site " + siteID + " does not exist");
 						}
 						// Remember that sites are zero-indexed
 						DataManager dm = dataManagers.get(siteID - 1);
@@ -325,24 +332,23 @@ public final class TransactionManager {
 					
 				}
 				
-				
-				//END OF CYCLE: 
+				//To be Removed
 				//Print transactions: 
 				System.out.println("TRANSACTION");
 				for (Transaction transaction: transactionMap.values()){
 					System.out.println(transaction);
 				}
 
-				//CREATE MESSAGE builder: 
-				//&& transaction.getStatus() != Transaction.Status.ABORTED
+				//create message builder: 
 				for (Transaction transaction: transactionMap.values()){
 					if (transaction.getOperationIndex() != -1 ){
 						for (Integer site: transaction.getSitesConcerned()){
-							messageBuilders[site-1].addOperation(transaction.getnextOperation());
+								messageBuilders[site-1].addOperation(transaction.getnextOperation());
 						}
 					}
 				}
 				
+				//Create message, send messages and get responses
 				for (int i=0; i<messageBuilders.length; i++){
 						
 					messages[i] = messageBuilders[i].build();	
@@ -358,25 +364,32 @@ public final class TransactionManager {
 														
 				
 				//re-init
+				numberOfTransactionsOver = 0;
+				numberOfWaitingTransactions = 0;
 				for (Transaction transaction : transactionMap.values()){
 					transaction.reinit();
-				}
-				
-				//Transaction graph: 
-				//if 2 transactions or more are waiting, called graphManager()
-				int numberOfWaitingTransactions = 0;
-				for (Transaction transaction: transactionMap.values()){
+					
+					//A transaction is over is Status is FINISH or ABORT: 
+					if (transaction.getStatus() == Transaction.Status.ABORTED ||
+							transaction.getStatus() == Transaction.Status.END){	
+						numberOfTransactionsOver++;
+					}
+					
+					//Transaction graph: 
+					//if 2 transactions or more are waiting, called graphManager()
 					if (transaction.getStatus() == Transaction.Status.WAIT){
 						numberOfWaitingTransactions++;
 					}
-				}				
+				}
+				
+
+				//Check deadlock in WaitForGraph: 
 				if (numberOfWaitingTransactions >=2){
 					ArrayList <String> removeList = graphManager();
 					if (removeList.size() >0){
 						for (Transaction transaction: transactionMap.values()){
 							if (removeList.contains(transaction.getTransactionID())){
-								Operation.Builder builder = 
-										new Operation.Builder(Opcode.ABORT);
+								Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 								builder.setTransactionID(transaction.getTransactionID());
 								Operation abort = builder.build();
 								transaction.setStatus(Transaction.Status.ABORTED);
@@ -385,9 +398,6 @@ public final class TransactionManager {
 						}
 					}
 				}
-					
-					
-					
 				System.out.println("END OF CYLCE\n\n");
 				
 
@@ -397,6 +407,90 @@ public final class TransactionManager {
 		}
 		catch (IOException e) {
 			throw new AssertionError("I/O failure");
+		}
+		
+		System.out.println("END OF FILE");
+	
+		//Process the remaining operations
+     	while (numberOfTransactionsOver < numberOfTransactions){
+			//To be Removed
+			//Print transactions: 
+			System.out.println("TRANSACTION");
+			for (Transaction transaction: transactionMap.values()){
+				System.out.println(transaction);
+			}
+
+			//create message builder: 
+			for (Transaction transaction: transactionMap.values()){
+				if (transaction.getOperationIndex() != -1 ){
+					for (Integer site: transaction.getSitesConcerned()){
+							messageBuilders[site-1].addOperation(transaction.getnextOperation());
+					}
+					if (transaction.getTimeout() > 20){
+						System.out.println("dead coz timeout"+transaction.getTransactionID());
+						Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
+						builder.setTransactionID(transaction.getTransactionID());
+						Operation abort = builder.build();
+						transaction.setStatus(Transaction.Status.ABORTED);
+						transaction.addOperations(abort);
+					}
+				}
+			}
+			
+			//Create message, send messages and get responses
+			for (int i=0; i<messageBuilders.length; i++){
+					
+				messages[i] = messageBuilders[i].build();	
+				System.out.println("Site "+(i+1)+" "+messages[i]);
+				dataManagers.get(i).sendMessage(messages[i]);
+				siteResponses[i] = dataManagers.get(i).update();
+				for (Response r: siteResponses[i]){
+					transactionMap.get(r.getTransactionID()).sendResponse(r);
+				}
+				System.out.println("response message "+siteResponses[i]);
+				messageBuilders[i].clear();
+			}
+													
+			
+			//re-init
+			numberOfTransactionsOver = 0;
+			numberOfWaitingTransactions = 0;
+			for (Transaction transaction : transactionMap.values()){
+				transaction.reinit();
+				
+				//A transaction is over is Status is FINISH or ABORT: 
+				if (transaction.getStatus() == Transaction.Status.ABORTED ||
+						transaction.getStatus() == Transaction.Status.END){	
+					numberOfTransactionsOver++;
+				}
+				
+				//Transaction graph: 
+				//if 2 transactions or more are waiting, called graphManager()
+				if (transaction.getStatus() == Transaction.Status.WAIT){
+					numberOfWaitingTransactions++;
+				}
+			}
+			
+
+			//Check deadlock in WaitForGraph: 
+			if (numberOfWaitingTransactions >=2){
+				ArrayList <String> removeList = graphManager();
+				if (removeList.size() >0){
+					for (Transaction transaction: transactionMap.values()){
+						if (removeList.contains(transaction.getTransactionID())){
+							Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
+							builder.setTransactionID(transaction.getTransactionID());
+							Operation abort = builder.build();
+							transaction.setStatus(Transaction.Status.ABORTED);
+							transaction.addOperations(abort);
+						}
+					}
+				}
+			}
+     	}
+		System.out.println("TRANSACTION");
+		for (Transaction transaction: transactionMap.values()){
+			System.out.println(transaction);
 		}
 	}
 	
@@ -409,11 +503,10 @@ public final class TransactionManager {
 	private HashMap <String, ArrayList<Integer>> createVariableMap(){
 		
 		HashMap<String, ArrayList <Integer>> variableMap = new HashMap<String, ArrayList <Integer>>();
-
 		ArrayList <Integer> sites = new ArrayList<Integer> (); 
-		for (int i=0; i<NUMBER_OF_SITES; i++){
+		
+		for (int i=0; i<NUMBER_OF_SITES; i++)
 			sites.add(i);
-		}
 		
 		for (int i=1; i<NUMBER_OF_VAR; i++){
 			if (i%2 == 0){
@@ -430,26 +523,20 @@ public final class TransactionManager {
 		}
 		return variableMap; 
 	}
-	
-	/**
-	 * 
-	 */
+
 	private ArrayList <String> graphManager(){
 		
 		WaitForGraph g = new WaitForGraph();
-		for (Transaction transaction: transactionMap.values()){
+		for (Transaction transaction: transactionMap.values())
 			g.addNode(transaction);
-		}
 		
 		g.init();
-		
 		return g.removeDeadlock();
-		
 	}
 	
 	public static void main (String[] args){
 		
-		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest7.txt", "tt.txt");
+		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest13.txt", "tt.txt");
 		
 	}
 }
