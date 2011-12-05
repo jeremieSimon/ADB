@@ -284,7 +284,7 @@ public final class DataManager {
 
 					
 					// Apply before image to the database
-					System.out.println("debug "+beforeImages.size()+ " be" +beforeImages.get(transactionID));
+					System.out.println("debug "+beforeImages.size()+ " be" +beforeImages.get(transactionID)+" T "+transactionID);
 					Map<String, Integer> beforeImage = beforeImages.get(transactionID);
 					variableIDs = beforeImage.keySet();
 					for (String variableID : variableIDs) {
