@@ -102,7 +102,6 @@ public final class Transaction {
 				//if the operation is end, then status of the transaction to end: 
 				if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
 					status = Status.END;
-					
 					//release all locks: 
 					locksHold.clear();
 					locksWait.clear();
@@ -169,6 +168,8 @@ public final class Transaction {
 			}
 			operationIndex++; 
 			locksWait.clear();
+			if (status == Status.WAIT)
+				status = Status.ACTIVE;
 		}
 		
 		//Operation could not succeed because of a lock
@@ -275,6 +276,13 @@ public final class Transaction {
 	 * @return operation   
 	 */
 	Operation getnextOperation() {	
+		
+		if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
+			status = Status.END;
+			//release all locks: 
+			locksHold.clear();
+			locksWait.clear();
+		}
 		return operations.get(operationIndex);
 	}
 
@@ -300,8 +308,12 @@ public final class Transaction {
 			return sitesUp;
 		}
 		
-		//Transaction is Active: 
+		//Transaction is currently Active: 
 		else{
+
+			if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
+				return sitesUp;
+			}
 			//See if variable is replicated or not
 			Integer variableID = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
 			if (variableID %2 != 0){

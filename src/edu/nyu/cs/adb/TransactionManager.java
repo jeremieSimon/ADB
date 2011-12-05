@@ -224,7 +224,7 @@ public final class TransactionManager {
 												
 						if (arg.length() == 0) {
 							for (DataManager dm : dataManagers) {
-								System.out.println(dm.dump());
+								//System.out.println(dm.dump());
 							}
 						}
 						// dump(xj) gives the committed values of all copies of
@@ -232,7 +232,7 @@ public final class TransactionManager {
 						else if (arg.startsWith("x")) {
 							String variableID = arg;
 							for (DataManager dm : dataManagers) {
-								System.out.println(dm.dump(variableID));
+								//System.out.println(dm.dump(variableID));
 							}
 						}
 						// dump(i) gives the committed values of all copies of 
@@ -245,7 +245,7 @@ public final class TransactionManager {
 							}
 							// Remember that sites are zero-indexed
 							DataManager dm = dataManagers.get(siteID - 1);
-							System.out.println(dm.dump());
+							//System.out.println(dm.dump());
 						}
 					}
 					
@@ -379,6 +379,7 @@ public final class TransactionManager {
 										new Operation.Builder(Opcode.ABORT);
 								builder.setTransactionID(transaction.getTransactionID());
 								Operation abort = builder.build();
+								transaction.setStatus(Transaction.Status.ABORTED);
 								transaction.addOperations(abort);
 							}
 						}
@@ -448,7 +449,7 @@ public final class TransactionManager {
 	
 	public static void main (String[] args){
 		
-		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest5.txt", "tt.txt");
+		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest7.txt", "tt.txt");
 		
 	}
 }
