@@ -326,6 +326,9 @@ public final class Transaction {
 			if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
 				return sitesUp;
 			}
+			if (operations.get(operationIndex).getOperationID() == Operation.Opcode.ABORT){
+				return sitesUp;
+			}
 			//See if variable is replicated or not
 			Integer variableID = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
 			if (variableID %2 != 0){
