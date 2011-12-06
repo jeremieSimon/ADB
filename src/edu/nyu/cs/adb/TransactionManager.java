@@ -259,6 +259,7 @@ public final class TransactionManager {
 						// site.
 												
 						if (arg.length() == 0) {
+							output.println("Read Message: \nDUMP \n");
 							for (DataManager dm : dataManagers) {
 								output.println(dm.dump());
 							}
@@ -267,6 +268,7 @@ public final class TransactionManager {
 						// variable xj at all sites
 						else if (arg.startsWith("x")) {
 							String variableID = arg;
+							output.println("Read Message: \nDUMP \n"+variableID);
 							for (DataManager dm : dataManagers) {
 								output.println(dm.dump(variableID));
 							}
@@ -281,6 +283,7 @@ public final class TransactionManager {
 							}
 							// Remember that sites are zero-indexed
 							DataManager dm = dataManagers.get(siteID - 1);
+							output.println("Read Message: \nDUMP \n"+siteID);
 							output.println(dm.dump());
 						}
 					}
@@ -488,7 +491,7 @@ public final class TransactionManager {
 				}
 			}
 		}	
-		
+		output.println("SUMMARY:\n");
 		for (Transaction transaction: transactionMap.values()){
 			output.println(transaction);
 		}

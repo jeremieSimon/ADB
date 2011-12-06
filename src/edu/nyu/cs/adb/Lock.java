@@ -41,7 +41,7 @@ public class Lock {
 	public String toString(){
 		String s = "";
 		s+="Var: "+variableID;
-		s+="\nType: "+lockType;
+		s+=" Type: "+lockType;
 		return s;
 	}
 
