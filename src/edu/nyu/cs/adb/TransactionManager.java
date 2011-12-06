@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -111,8 +110,8 @@ public final class TransactionManager {
 	/**
 	 * Runs the simulation, taking a line of input in each timestep.
 	 * <ul>
-	 * <li>On ‘begin Ti’, it creates a new instance of Transaction</li>
-	 * <li>On ‘end Ti’, it deletes the instance i of Transaction</li>
+	 * <li>On �begin Ti�, it creates a new instance of Transaction</li>
+	 * <li>On �end Ti�, it deletes the instance i of Transaction</li>
 	 * <li>On write, or read, it calls the addOperations(Operation) of the 
 	 * transaction concerned</li>
 	 * </ul>
@@ -232,8 +231,8 @@ public final class TransactionManager {
 												
 						if (arg.length() == 0) {
 							for (DataManager dm : dataManagers) {
-								//System.out.println(dm.dump());
 								output.println(dm.dump());
+								System.out.println(dm.dump());
 							}
 						}
 						// dump(xj) gives the committed values of all copies of
@@ -241,8 +240,8 @@ public final class TransactionManager {
 						else if (arg.startsWith("x")) {
 							String variableID = arg;
 							for (DataManager dm : dataManagers) {
-								//System.out.println(dm.dump(variableID));
 								output.println(dm.dump(variableID));
+								System.out.println(dm.dump(variableID));
 							}
 						}
 						// dump(i) gives the committed values of all copies of 
@@ -255,8 +254,8 @@ public final class TransactionManager {
 							}
 							// Remember that sites are zero-indexed
 							DataManager dm = dataManagers.get(siteID - 1);
-							//System.out.println(dm.dump());
 							output.println(dm.dump());
+							System.out.println(dm.dump());
 						}
 					}
 					
@@ -264,10 +263,7 @@ public final class TransactionManager {
 					// commit
 					if (opcode.equals("end")) {
 						String transactionID = args[0];
-						
-						//Remove the transaction from transactions
-						System.out.println("REMOVE "+transactionID);
-						
+												
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.FINISH);
 						builder.setTransactionID(transactionID);
@@ -333,15 +329,11 @@ public final class TransactionManager {
 						dm.recover();
 					}
 					
-				}
-				
+				}	
 				transactionControler();
 				// Read the next line
 				currentLine = input.readLine();
 			}
-			System.out.println("END OF FILE");
-			System.out.println("declared "+numberOfTransactions);
-			System.out.println("over "+numberOfTransactionsOver);
 		}
 		catch (IOException e) {
 			throw new AssertionError("I/O failure");
@@ -354,10 +346,6 @@ public final class TransactionManager {
      	while (numberOfTransactionsOver < numberOfTransactions){
         		transactionControler();
         	}
-		System.out.println("TRANSACTION");
-		for (Transaction transaction: transactionMap.values()){
-			System.out.println(transaction);
-		}
 	}
 	
 	
@@ -401,20 +389,12 @@ public final class TransactionManager {
 	}
 	
 	private void transactionControler(){
-		//To be Removed
-		//Print transactions: 
-		System.out.println("TRANSACTION");
-		for (Transaction transaction: transactionMap.values()){
-			System.out.println(transaction);
-		}
 
 		//create message builder: 
 		for (Transaction transaction: transactionMap.values()){
 			if (transaction.getOperationIndex() != -1 ){
-				for (Integer site: transaction.getSitesConcerned()){
-					messageBuilders[site-1].addOperation(transaction.getnextOperation());
-				}
-				if (transaction.getTimeout() > transaction.TIMEOUT_DELAY){
+				
+				if (transaction.getTimeout() > transaction.TIMEOUT_DELAY && !transaction.getIsTransactionOver()){
 					System.out.println("dead coz timeout"+transaction.getTransactionID());
 					output.println(transaction.getTransactionID() + " Aborted due to timeout");
 					Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
@@ -422,6 +402,9 @@ public final class TransactionManager {
 					Operation abort = builder.build();
 					transaction.setStatus(Transaction.Status.ABORTED);
 					transaction.addOperations(abort);
+				}
+				for (Integer site: transaction.getSitesConcerned()){	
+					messageBuilders[site-1].addOperation(transaction.getnextOperation());
 				}
 			}
 		}
@@ -450,6 +433,7 @@ public final class TransactionManager {
 			//A transaction is over is Status is FINISH or ABORT: 
 			if (transaction.getIsTransactionOver()){	
 				numberOfTransactionsOver++;
+				transactionMap.remove(transaction);
 			}
 			
 			//Transaction graph: 
@@ -475,9 +459,7 @@ public final class TransactionManager {
 					}
 				}
 			}
-		}
-		System.out.println("END OF CYLCE\n\n");
-		
+		}		
 	}
 	
 	public static void main (String[] args){
@@ -485,7 +467,7 @@ public final class TransactionManager {
 			TransactionManager TM = new TransactionManager (args[0], args[1]);
 		}
 		else {
-			TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest13.txt", "tt.txt");
+			TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest5.txt", "tt.txt");
 		}	
 	}
 }

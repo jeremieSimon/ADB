@@ -18,6 +18,7 @@ public class WaitForGraph {
 	private ArrayList <Transaction> transactions = new ArrayList <Transaction>();
 	
 	/**
+	 * Add transaction in the waitForGraph
 	 * @param transaction
 	 */
 	void addNode(Transaction transaction){
@@ -25,6 +26,10 @@ public class WaitForGraph {
 		ageMap.put(transaction.getTransactionID(), transaction.getAge());
 	}
 	
+	/**
+	 * After all transactions have been added, 
+	 * this function checks the dependencies between each transaction
+	 */
 	void init(){
 		for (Transaction transaction: transactions){
 			buildDependencies(transaction);
@@ -56,7 +61,8 @@ public class WaitForGraph {
 	}
 	
 	/**
-	 * 
+	 * This function is called in case of deadlock.
+	 * It removes the node causing the deadlock
 	 * @param nodeID
 	 */
 	void removeNode(String nodeID){

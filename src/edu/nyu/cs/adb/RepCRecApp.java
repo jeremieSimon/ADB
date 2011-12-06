@@ -43,4 +43,3 @@ public final class RepCRecApp {
 		if (sim != null) sim.run();
 	}
 }
-

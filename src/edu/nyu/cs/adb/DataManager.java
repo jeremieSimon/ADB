@@ -282,7 +282,6 @@ public final class DataManager {
 
 					
 					// Apply before image to the database
-					System.out.println("debug "+beforeImages.size()+ " be" +beforeImages.get(transactionID)+" T "+transactionID);
 					Map<String, Integer> beforeImage = 
 						beforeImages.get(transactionID);
 					if (beforeImage != null) {
@@ -620,7 +619,7 @@ public final class DataManager {
 	
 	/**
 	 * Tells the site to fail. The site loses all volatile data and lock 
-	 * information. The transaction manager won’t be able to send messages to 
+	 * information. The transaction manager won�t be able to send messages to 
 	 * this site until this site recovers.
 	 */
 	void fail () {
