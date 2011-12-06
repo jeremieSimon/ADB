@@ -1,0 +1,5 @@
+# Compile
+javac -classpath src -d bin src/edu/nyu/cs/adb/*.java
+
+# Run
+java -classpath bin edu.nyu.cs.adb.RepCRecApp inputfile outputfile

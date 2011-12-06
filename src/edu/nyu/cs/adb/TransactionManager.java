@@ -233,6 +233,7 @@ public final class TransactionManager {
 						if (arg.length() == 0) {
 							for (DataManager dm : dataManagers) {
 								//System.out.println(dm.dump());
+								output.println(dm.dump());
 							}
 						}
 						// dump(xj) gives the committed values of all copies of
@@ -241,6 +242,7 @@ public final class TransactionManager {
 							String variableID = arg;
 							for (DataManager dm : dataManagers) {
 								//System.out.println(dm.dump(variableID));
+								output.println(dm.dump(variableID));
 							}
 						}
 						// dump(i) gives the committed values of all copies of 
@@ -254,6 +256,7 @@ public final class TransactionManager {
 							// Remember that sites are zero-indexed
 							DataManager dm = dataManagers.get(siteID - 1);
 							//System.out.println(dm.dump());
+							output.println(dm.dump());
 						}
 					}
 					
