@@ -292,6 +292,7 @@ public final class TransactionManager {
 						for (Transaction transaction : transactionMap.values()){
 							transaction.siteFailure(siteID);
 							if (transaction.getStatus() == Transaction.Status.ABORTED){
+								output.println(transaction.getTransactionID() + " aborted due to site failure");
 								Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 								builder.setTransactionID(transaction.getTransactionID());
 								Operation abort = builder.build();
@@ -415,6 +416,7 @@ public final class TransactionManager {
 				}
 				if (transaction.getTimeout() > transaction.TIMEOUT_DELAY){
 					System.out.println("dead coz timeout"+transaction.getTransactionID());
+					output.println(transaction.getTransactionID() + " Aborted due to timeout");
 					Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 					builder.setTransactionID(transaction.getTransactionID());
 					Operation abort = builder.build();
@@ -464,6 +466,7 @@ public final class TransactionManager {
 			if (removeList.size() >0){
 				for (Transaction transaction: transactionMap.values()){
 					if (removeList.contains(transaction.getTransactionID())){
+						output.println(transaction.getTransactionID() + " aborted due to wait-die protocol");
 						Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 						builder.setTransactionID(transaction.getTransactionID());
 						Operation abort = builder.build();
