@@ -453,9 +453,7 @@ public final class TransactionManager {
 					}
 				}
 			}
-		}
-		System.out.println("END OF CYLCE\n\n");
-		
+		}		
 	}
 	
 	public static void main (String[] args){
