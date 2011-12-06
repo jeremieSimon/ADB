@@ -475,8 +475,11 @@ public final class TransactionManager {
 	}
 	
 	public static void main (String[] args){
-		
-		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest13.txt", "tt.txt");
-		
+		if (args.length >= 2) {
+			TransactionManager TM = new TransactionManager (args[0], args[1]);
+		}
+		else {
+			TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest13.txt", "tt.txt");
+		}	
 	}
 }
