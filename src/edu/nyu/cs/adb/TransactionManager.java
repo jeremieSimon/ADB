@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -232,7 +231,7 @@ public final class TransactionManager {
 												
 						if (arg.length() == 0) {
 							for (DataManager dm : dataManagers) {
-								//System.out.println(dm.dump());
+								System.out.println(dm.dump());
 							}
 						}
 						// dump(xj) gives the committed values of all copies of
@@ -240,7 +239,7 @@ public final class TransactionManager {
 						else if (arg.startsWith("x")) {
 							String variableID = arg;
 							for (DataManager dm : dataManagers) {
-								//System.out.println(dm.dump(variableID));
+								System.out.println(dm.dump(variableID));
 							}
 						}
 						// dump(i) gives the committed values of all copies of 
@@ -253,7 +252,7 @@ public final class TransactionManager {
 							}
 							// Remember that sites are zero-indexed
 							DataManager dm = dataManagers.get(siteID - 1);
-							//System.out.println(dm.dump());
+							System.out.println(dm.dump());
 						}
 					}
 					
@@ -326,15 +325,11 @@ public final class TransactionManager {
 						dm.recover();
 					}
 					
-				}
-				
+				}	
 				transactionControler();
 				// Read the next line
 				currentLine = input.readLine();
 			}
-			System.out.println("END OF FILE");
-			System.out.println("declared "+numberOfTransactions);
-			System.out.println("over "+numberOfTransactionsOver);
 		}
 		catch (IOException e) {
 			throw new AssertionError("I/O failure");
@@ -347,10 +342,6 @@ public final class TransactionManager {
      	while (numberOfTransactionsOver < numberOfTransactions){
         		transactionControler();
         	}
-		System.out.println("TRANSACTION");
-		for (Transaction transaction: transactionMap.values()){
-			System.out.println(transaction);
-		}
 	}
 	
 	
@@ -394,12 +385,6 @@ public final class TransactionManager {
 	}
 	
 	private void transactionControler(){
-		//To be Removed
-		//Print transactions: 
-		System.out.println("TRANSACTION");
-		for (Transaction transaction: transactionMap.values()){
-			System.out.println(transaction);
-		}
 
 		//create message builder: 
 		for (Transaction transaction: transactionMap.values()){

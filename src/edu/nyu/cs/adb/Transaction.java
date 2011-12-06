@@ -1,10 +1,8 @@
-	package edu.nyu.cs.adb;
-
+package edu.nyu.cs.adb;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Set;
 
 import edu.nyu.cs.adb.Operation.Opcode;
@@ -19,8 +17,16 @@ import edu.nyu.cs.adb.Operation.Opcode;
 public final class Transaction {
 	
 	/**
-	 * A transaction is said IDLE, when it starts but has no operation on going
-	 * After a transaction is asked to read or write, a transaction becomes active
+	 * A transaction is IDLE if: 
+	 * The transaction started but no operation READ or WRITE were added
+	 * A transaction is ACTIVE if: 
+	 * Default status
+	 * A transaction is WAIT if: 
+	 * Transaction is blocked because of a lock or because it cannot commit
+	 * A transaction is ABORTED if: 
+	 * because of Deadlocks, site failures or timeout
+	 * A Transaction is END if: 
+	 * All commit were successful
 	 */
 	public enum Status{
 		IDLE,
@@ -30,15 +36,18 @@ public final class Transaction {
 		END
 	}
 	
-	
 	private ArrayList <Operation> operations = new ArrayList <Operation> ();
 	private HashMap <String, ArrayList <Integer>> variableMap; 
 	private String transactionID; 
 	private int operationIndex;  
 	private int age; 
+	private Status status; 
+	
+	//Timeout variables: 
 	private int timeout = 0; 
 	final int TIMEOUT_DELAY = 30;
-	private Status status; 
+
+	//Variables use to keep track of the sites (up/down) 
 	private ArrayList <Integer> sitesUp; 
 	private ArrayList <Integer> originalSitesUp; 
 	private ArrayList <Integer> sitesConcerned = new ArrayList <Integer>(); 
@@ -79,6 +88,9 @@ public final class Transaction {
 
 	
 	/**
+	 * This function is called by the Transaction Manager
+	 * The operation that can be added are: 
+	 * READ, WRITE, END, ABORTED
 	 * @param operation Operation
 	 */
 	void addOperations (Operation operation) {
@@ -120,9 +132,11 @@ public final class Transaction {
 	}
 	
 	/**
-	 * 1. If response is success, increment the counter
-	 * 2. If response is lock, wait, keep the operation for the next cycle 
-	 * 3. If response is failure, set status to aborted, no more operation from that transaction can be sent
+	 * If any site respond with a lock, Transaction will be locked
+	 * If any site respond with a fail, Transaction will fail
+	 * If all sites answer successfully and the status is END. Transaction is over
+	 * If all sites answer successfully and the status is ABORTED. Transaction is over
+	 * If all sites answer successfully, message was successfull
 	 * @param response
 	 */
 	void sendResponse(Response response){
@@ -147,8 +161,10 @@ public final class Transaction {
 	}
 	
 	/**
-	 * This function is called by the TM at the end of each cycle. 
+	 * This function is called by the Transaction Manager at the end of each cycle. 
 	 * It re-init some variables
+	 * Update status
+	 * Parses responses send before
 	 */
 	void reinit(){
 				
@@ -221,9 +237,13 @@ public final class Transaction {
 	}
 	
 	/**
-	 * 1. If the site that failed hold a variable with Write Lock
-	 * Then the transaction becomes incorrect
-	 * 2. If the site that failed hold a unique variable used by the Transaction
+	 * This function is called by the Transaction Manager. 
+	 * This function says whether should abort or not. 
+	 * The transaction abort if: 
+	 * The site that failed hold a variable with Write Lock
+	 * This function also make sure to update the lock. 
+	 * If the site that failed hold a read lock on non-replicated variable 
+	 * Then the should be removed
 	 * @param siteID
 	 */
 	void siteFailure (int siteID) {
@@ -262,6 +282,10 @@ public final class Transaction {
 	}
 	
 	/**
+	 * Function called by the Transaction Manager
+	 * The transaction can recover if these 2 holds: 
+	 * None of the operation executed before was a WRITE
+	 * The site that recovers was originally up when Transaction was created 
 	 * @param siteID
 	 */
 	void siteRecover(int siteID){
@@ -306,7 +330,14 @@ public final class Transaction {
 	}
 
 	
-	//GETTER: 
+	//GETTER 
+	
+	/**
+	 * This function is called at every cycle by the Transaction Manager. 
+	 * It ensures that no message is sent to the wrong sites 
+	 * and that no message is sent if the site is not concerned
+	 * @return lists of the sites concerned by the operation
+	 */
 	public ArrayList <Integer> getSitesConcerned(){
 		//if no operation was added, return null
 		//No sites are concerned by the operation
@@ -358,53 +389,75 @@ public final class Transaction {
 		}
 	}
 	
+	/**
+	 * @return transactionID
+	 */
 	public String getTransactionID(){
 		return transactionID; 
 	}
 
+	/**
+	 * @return list of the sitesUp
+	 */
 	public ArrayList <Integer> getSitesUp(){
 		return sitesUp; 
 	}
 	
+	/**
+	 * @return operationIndex
+	 */
 	public int getOperationIndex(){
 		return operationIndex; 
 	}
 	
+	/**
+	 * @return status of the transaction
+	 */
 	public Status getStatus(){
 		return status;
 	}
 	
+	/**
+	 * @return age of the transaction
+	 */
 	public int getAge(){
 		return age;
 	}
 
+	/**
+	 * @return set of locks
+	 */
 	public Set <Lock> getLocksHold(){
 		return locksHold;
 	}
 	
+	/**
+	 * @return set of locks
+	 */
 	public Set <Lock> getLocksWait(){
 		return locksWait;
 	}
 	
-	//TO BE REMOVED
-	public void addLocksHold(Lock lock){
-		locksHold.add(lock);
-	}
-
-	//TO BE REMOVED
-	public void addLocksWait(Lock lock){
-		locksWait.add(lock);
-	}
-	
-	//TO BE REMOVED
+	/**
+	 * This function is called by the transaction Manager
+	 * in case the status has to be changed
+	 * @param status
+	 */
 	public void setStatus(Status status){
 		this.status = status;
 	}
 	
+	/**
+	 * @return timeout
+	 */
 	public int getTimeout(){
 		return timeout;
 	}
 	
+	/**
+	 * @return true if the transaction has ended or is aborted
+	 * false otherwise
+	 */
 	public boolean getIsTransactionOver(){
 		return isTransactionOver;
 	}
