@@ -1,0 +1,8 @@
+// Test 14
+// Main Test Idea:
+// Special Wait 
+begin(T1)
+fail(2)
+W(T1,x1,1)
+recover(2)
+end(T1)

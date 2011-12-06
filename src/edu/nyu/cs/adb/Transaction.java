@@ -17,11 +17,6 @@ import edu.nyu.cs.adb.Operation.Opcode;
  * @author dandelarosa
  */
 public final class Transaction {
-	/**
-	 * Set of sites = all sites 
-	 * <br>status = run 
-	 * <br>status can be changed to wait
-	 */
 	
 	/**
 	 * A transaction is said IDLE, when it starts but has no operation on going
@@ -42,7 +37,7 @@ public final class Transaction {
 	private int operationIndex;  
 	private int age; 
 	private int timeout = 0; 
-	private final int TIMEOUT_DELAY = 30;
+	final int TIMEOUT_DELAY = 30;
 	private Status status; 
 	private ArrayList <Integer> sitesUp; 
 	private ArrayList <Integer> sitesConcerned = new ArrayList <Integer>(); 
@@ -55,13 +50,15 @@ public final class Transaction {
 	//Variables used in sendResponse
 	private boolean isFailed = false;
 	private boolean isLocked = false;
+	private boolean isEndedSuccessfully = false;
 	private boolean isResponse = false;
 	
 	//variables used when needs to abort a Transaction: 
-	boolean isAborted = true; 
+	boolean isNotAborted = true; 
+	
+	private boolean isTransactionOver = false;
 	
 	/**
-	 * 
 	 * @param variableMap
 	 * @param transactionID
 	 * @param sitesUp can only send a message to the sites that were up when the 
@@ -77,55 +74,34 @@ public final class Transaction {
 		status = Status.IDLE; 
 		this.age = age;
 	}
-	
-	//TO BE REMOVED
-	Transaction(String transactionID, int age){
-		this.transactionID = transactionID; 
-		this.age = age;
-	}
+
 	
 	/**
-	 *1. Each time an operation is performed by Transaction, it is being added. 
-	 *We want to keep track of the operation of a transaction in case Transaction is being aborted, so it can restart later
-	 *2. The sites on which the operation is active is being added to the list of sites used so far
-	 *3. If the operation is on a site that is not on the list of sites that have been up so far, transaction is a failure
-	 *4. Dump
 	 * @param operation Operation
 	 */
 	void addOperations (Operation operation) {
 	
 		//Operation types can be W, R, End
 		//Prevent adding operation to a Transaction that ended
+		//Status is ACTIVE or IDLE
 		if (status != Status.END && status != Status.ABORTED){
 			
-			//On End: 
-			if (operation.getOperationID() == Operation.Opcode.FINISH){
-				operations.add(operation);
-				//if the operation is end, then status of the transaction to end: 
-				if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
-					status = Status.END;
-					//release all locks: 
-					locksHold.clear();
-					locksWait.clear();
-				}
-			}
-			//On WRITE, READ: 
-			else{
-				operations.add(operation);
+			operations.add(operation);
 			
-				//if this is the first operation added: 
-				//Init the pointer operationIndex
-				if (operations.size() == 1)
-					operationIndex = 0; 
-							
-				//ON R or W: 
-				if (operation.getOperationID() == Operation.Opcode.READ || operation.getOperationID() == Operation.Opcode.WRITE){
-					status = Status.ACTIVE;
-				}
+			//if this is the first operation added: 
+			//Init the pointer operationIndex
+			if (operations.size() == 1)
+				operationIndex = 0; 
+						
+			//ON R or W: 
+			if (operation.getOperationID() == Operation.Opcode.READ || operation.getOperationID() == Operation.Opcode.WRITE){
+				status = Status.ACTIVE;
 			}
+			
+			//Nothing on FINISH operation
 		}
 		//On abort: 
-		else if (status == Status.ABORTED && isAborted){
+		else if (status == Status.ABORTED && isNotAborted){
 			operations.clear();
 			Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 			builder.setTransactionID(transactionID);
@@ -137,6 +113,8 @@ public final class Transaction {
 			locksHold.clear();
 			locksWait.clear();
 		}
+		
+		//On end, no operation can be added
 	}
 	
 	/**
@@ -146,6 +124,7 @@ public final class Transaction {
 	 * @param response
 	 */
 	void sendResponse(Response response){
+		
 		isResponse = true;
 		
 		if (response.getStatus() == Response.Status.LOCKED){
@@ -155,6 +134,14 @@ public final class Transaction {
 		else if (response.getStatus() == Response.Status.FAILURE){
 			isFailed = true; 
 		}
+		
+		else if (response.getStatus() == Response.Status.SUCCESS && status == Status.END){
+			isEndedSuccessfully = true;
+		}
+		
+		else if (response.getStatus() == Response.Status.SUCCESS && status == Status.ABORTED){
+			isEndedSuccessfully = true;
+		}
 	}
 	
 	/**
@@ -162,9 +149,17 @@ public final class Transaction {
 	 * It re-init some variables
 	 */
 	void reinit(){
+				
+		//Operation ended succesfully: 
+		 if (isEndedSuccessfully && !isLocked && !isFailed && isResponse){
+			isTransactionOver = true;	
+		}
 		
 		//Operation was a success: 
-		if (!isFailed && !isLocked && isResponse){
+		 else if (!isFailed && !isLocked && isResponse && !isEndedSuccessfully){
+			//re-init the timeout
+			 timeout = 0;
+			//acquire locks
 			if (operationIndex > 0 && (operations.get(operationIndex).getOperationID() == Operation.Opcode.READ ||
 					operations.get(operationIndex).getOperationID() == Operation.Opcode.WRITE)){
 				 String lockType = operations.get(operationIndex).getOperationID().toString();
@@ -179,6 +174,8 @@ public final class Transaction {
 		
 		//Operation could not succeed because of a lock
 		else if (isLocked && !isFailed && isResponse){
+			timeout++;
+			
 			status = Status.WAIT; 
 			
 			//Add a lock to locksWait
@@ -198,15 +195,26 @@ public final class Transaction {
 		//Operation failed: 
 		//Release all locks
 		else if (isFailed && isResponse){
-			isFailed = true; 
+			System.out.println("operation failed flag");
 			status = Status.ABORTED;
 			locksWait.clear();
 			locksHold.clear();
+			timeout = 0;
 		}
+		
+		//No operation was sent and operation is not over: 
+		else if (!isFailed && !isLocked && !isResponse && !isEndedSuccessfully){
+			timeout++;
+			//if the status is idle, init the operation index
+			if (timeout>TIMEOUT_DELAY && status == Status.IDLE)
+				operationIndex = 0;
+		}
+		
 		
 		//re-init the variables: 
 		isFailed = false; 
 		isLocked = false; 
+		isEndedSuccessfully = false;
 		isResponse = false;		
 	}
 	
@@ -224,25 +232,23 @@ public final class Transaction {
 		// if T is Active or Wait: 
 		if (status == Status.ACTIVE || status == Status.WAIT){
 			for (int i = 0; i<operationIndex; i++){
-			//for (Operation operation: operations){
 				//Check if site that failed was used previously 
-				if (operations.get(i).getOperationID() != Operation.Opcode.BEGIN && 
-						operations.get(i).getSiteID().contains(siteID)){
+				if (operations.get(i).getOperationID() != Operation.Opcode.BEGIN && operations.get(i).getSiteID().contains(siteID)){
 					//If var was updated on any kind of site
 					if (operations.get(i).getOperationID() == Opcode.WRITE){
 						status = Status.ABORTED; 
 					}
 					String variableID = operations.get(i).getVariableID(); 
+					int var = Integer.parseInt(variableID.substring(1));
 					//If var was read or write on non-replicated site
-					if (variableMap.get(variableID).size() == 1){
-						//if var was updated
-						if (operations.get(i).getOperationID() == Opcode.WRITE)
-							status = Status.ABORTED; 
+					if (var %2 == 1){ 
 						//if var was just read, then lock disapear
-						else if (operations.get(i).getOperationID() == Opcode.READ){
-							String lockType = "READ";
-							Lock lock = new Lock (variableID, lockType);
-							locksWait.remove(lock);
+						if (operations.get(i).getOperationID() == Opcode.READ){
+							Lock lock = new Lock (variableID, "READ");
+							for (Lock l: locksHold){
+								if (lock.equals(l))
+									locksHold.remove(l);				
+							}
 						}
 					}
 				}
@@ -260,10 +266,10 @@ public final class Transaction {
 	void siteRecover(int siteID){
 		
 		boolean isWriteOperations = false; 
-		//iter on all operations: 
-		for (Operation operation: operations){
+		//iter on all operations before the operation index: 
+		for (int i=0; i<operationIndex; i++){
 			//Check if there exist a WRITE operation: 
-			if (operation.getOperationID() == Operation.Opcode.WRITE){
+			if (operations.get(i).getOperationID() == Operation.Opcode.WRITE){
 				isWriteOperations = true;
 			}
 		}
@@ -284,7 +290,6 @@ public final class Transaction {
 		
 		if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
 			status = Status.END;
-			
 			//release all locks: 
 			locksHold.clear();
 			locksWait.clear();
@@ -299,35 +304,25 @@ public final class Transaction {
 		//No sites are concerned by the operation
 		//Then no site will ask for the next operation
 		if (operationIndex >= operations.size()){
-			timeout++;
-			if (timeout>20){
-				operationIndex = 0;
-			}
-			System.out.println("timeout "+timeout);
 			return new ArrayList <Integer>();
 		}
 		
 		//All sites are concerned
 		else if (status == Status.IDLE){
-			timeout++;
-			if (timeout>20)
-				operationIndex = 0;
 			return sitesUp;
 		}
 		
-		//No site is concerned: 
-		else if (status == Status.ABORTED && isAborted){
-			isAborted = false;
+		//Aborted status: 
+		else if (status == Status.ABORTED && isNotAborted){
+			isNotAborted = false;
 			return sitesUp;
 		}
 		else if  (status == Status.END){
-			timeout = 0;
 			return sitesUp;
 		}
 		
 		//Transaction is currently Active: 
 		else{
-			timeout = 0;
 			if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
 				return sitesUp;
 			}
@@ -339,8 +334,11 @@ public final class Transaction {
 				int siteID = sitesConcerned.get(0);
 				if (sitesUp.contains(siteID))
 					return sitesConcerned;
-				else
+				//Site for commit is down
+				else{
+					status = Status.WAIT;
 					return new ArrayList <Integer>();
+				}
 			}
 
 			else{
@@ -394,6 +392,10 @@ public final class Transaction {
 	
 	public int getTimeout(){
 		return timeout;
+	}
+	
+	public boolean getIsTransactionOver(){
+		return isTransactionOver;
 	}
 	
 	@Override

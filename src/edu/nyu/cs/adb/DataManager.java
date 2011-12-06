@@ -251,8 +251,7 @@ public final class DataManager {
 			switch (operation.getOperationID()) {
 				case ABORT:
 				{
-					
-					String transactionID = operation.getTransactionID();
+					String transactionID = operation.getTransactionID();	
 					
 					// Check if the transaction is active
 					boolean isReadOnly = 
@@ -280,7 +279,6 @@ public final class DataManager {
 							writeLocks.remove(variableID);
 						}
 					}
-					
 
 					
 					// Apply before image to the database
@@ -579,6 +577,7 @@ public final class DataManager {
 								beforeImage.put(variable, value);
 							}
 							beforeImages.put(transactionID, beforeImage);
+							
 						}
 						
 						// Write to the variable

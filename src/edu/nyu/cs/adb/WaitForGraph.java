@@ -160,36 +160,7 @@ public class WaitForGraph {
 		return nodeRemoved;
 	}
 	
-	public static void main (String[] args){
-		
-		Transaction T1 =  new Transaction("T1", 1);
-		Transaction T2 =  new Transaction("T2", 3);
-		Transaction T3 =  new Transaction("T3", 2);
-		
-		T1.addLocksHold(new Lock("x1", "WRITE"));
-		T1.addLocksWait(new Lock("x3", "WRITE"));
-		T1.setStatus(Transaction.Status.WAIT);
-		
-		T2.addLocksHold(new Lock("x2", "WRITE"));
-		T2.addLocksWait(new Lock("x1", "WRITE"));
-		T2.setStatus(Transaction.Status.WAIT);
-
-		T3.addLocksHold(new Lock("x3", "WRITE"));
-		T3.addLocksWait(new Lock("x2", "WRITE"));
-		T3.setStatus(Transaction.Status.WAIT);
-
-
-		WaitForGraph g = new WaitForGraph();
-		g.addNode(T1);
-		g.addNode(T2);
-		g.addNode(T3);
-		
-		g.init();
-		
-		System.out.println(g.removeDeadlock());
-		
-
-		
+	public static void main (String[] args){		
 		
 	}
 }

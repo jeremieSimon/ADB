@@ -162,7 +162,6 @@ public final class TransactionManager {
 						String transactionID = args[0];
 						//create a new instance of transaction: 
 						transactionMap.put(transactionID, new Transaction(variableMap, transactionID, sitesUp, age));
-						
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.BEGIN);
 						builder.setTransactionID(transactionID);
@@ -332,162 +331,25 @@ public final class TransactionManager {
 					
 				}
 				
-				//To be Removed
-				//Print transactions: 
-				System.out.println("TRANSACTION");
-				for (Transaction transaction: transactionMap.values()){
-					System.out.println(transaction);
-				}
-
-				//create message builder: 
-				for (Transaction transaction: transactionMap.values()){
-					if (transaction.getOperationIndex() != -1 ){
-						for (Integer site: transaction.getSitesConcerned()){
-								messageBuilders[site-1].addOperation(transaction.getnextOperation());
-						}
-					}
-				}
-				
-				//Create message, send messages and get responses
-				for (int i=0; i<messageBuilders.length; i++){
-						
-					messages[i] = messageBuilders[i].build();	
-					System.out.println("Site "+(i+1)+" "+messages[i]);
-					dataManagers.get(i).sendMessage(messages[i]);
-					siteResponses[i] = dataManagers.get(i).update();
-					for (Response r: siteResponses[i]){
-						transactionMap.get(r.getTransactionID()).sendResponse(r);
-					}
-					System.out.println("response message "+siteResponses[i]);
-					messageBuilders[i].clear();
-				}
-														
-				
-				//re-init
-				numberOfTransactionsOver = 0;
-				numberOfWaitingTransactions = 0;
-				for (Transaction transaction : transactionMap.values()){
-					transaction.reinit();
-					
-					//A transaction is over is Status is FINISH or ABORT: 
-					if (transaction.getStatus() == Transaction.Status.ABORTED ||
-							transaction.getStatus() == Transaction.Status.END){	
-						numberOfTransactionsOver++;
-					}
-					
-					//Transaction graph: 
-					//if 2 transactions or more are waiting, called graphManager()
-					if (transaction.getStatus() == Transaction.Status.WAIT){
-						numberOfWaitingTransactions++;
-					}
-				}
-				
-
-				//Check deadlock in WaitForGraph: 
-				if (numberOfWaitingTransactions >=2){
-					ArrayList <String> removeList = graphManager();
-					if (removeList.size() >0){
-						for (Transaction transaction: transactionMap.values()){
-							if (removeList.contains(transaction.getTransactionID())){
-								Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
-								builder.setTransactionID(transaction.getTransactionID());
-								Operation abort = builder.build();
-								transaction.setStatus(Transaction.Status.ABORTED);
-								transaction.addOperations(abort);
-							}
-						}
-					}
-				}
-				System.out.println("END OF CYLCE\n\n");
-				
-
+				transactionControler();
 				// Read the next line
 				currentLine = input.readLine();
 			}
+			System.out.println("END OF FILE");
+			System.out.println("declared "+numberOfTransactions);
+			System.out.println("over "+numberOfTransactionsOver);
 		}
 		catch (IOException e) {
 			throw new AssertionError("I/O failure");
 		}
 		
-		System.out.println("END OF FILE");
+
+
 	
 		//Process the remaining operations
      	while (numberOfTransactionsOver < numberOfTransactions){
-			//To be Removed
-			//Print transactions: 
-			System.out.println("TRANSACTION");
-			for (Transaction transaction: transactionMap.values()){
-				System.out.println(transaction);
-			}
-
-			//create message builder: 
-			for (Transaction transaction: transactionMap.values()){
-				if (transaction.getOperationIndex() != -1 ){
-					for (Integer site: transaction.getSitesConcerned()){
-							messageBuilders[site-1].addOperation(transaction.getnextOperation());
-					}
-					if (transaction.getTimeout() > 20){
-						System.out.println("dead coz timeout"+transaction.getTransactionID());
-						Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
-						builder.setTransactionID(transaction.getTransactionID());
-						Operation abort = builder.build();
-						transaction.setStatus(Transaction.Status.ABORTED);
-						transaction.addOperations(abort);
-					}
-				}
-			}
-			
-			//Create message, send messages and get responses
-			for (int i=0; i<messageBuilders.length; i++){
-					
-				messages[i] = messageBuilders[i].build();	
-				System.out.println("Site "+(i+1)+" "+messages[i]);
-				dataManagers.get(i).sendMessage(messages[i]);
-				siteResponses[i] = dataManagers.get(i).update();
-				for (Response r: siteResponses[i]){
-					transactionMap.get(r.getTransactionID()).sendResponse(r);
-				}
-				System.out.println("response message "+siteResponses[i]);
-				messageBuilders[i].clear();
-			}
-													
-			
-			//re-init
-			numberOfTransactionsOver = 0;
-			numberOfWaitingTransactions = 0;
-			for (Transaction transaction : transactionMap.values()){
-				transaction.reinit();
-				
-				//A transaction is over is Status is FINISH or ABORT: 
-				if (transaction.getStatus() == Transaction.Status.ABORTED ||
-						transaction.getStatus() == Transaction.Status.END){	
-					numberOfTransactionsOver++;
-				}
-				
-				//Transaction graph: 
-				//if 2 transactions or more are waiting, called graphManager()
-				if (transaction.getStatus() == Transaction.Status.WAIT){
-					numberOfWaitingTransactions++;
-				}
-			}
-			
-
-			//Check deadlock in WaitForGraph: 
-			if (numberOfWaitingTransactions >=2){
-				ArrayList <String> removeList = graphManager();
-				if (removeList.size() >0){
-					for (Transaction transaction: transactionMap.values()){
-						if (removeList.contains(transaction.getTransactionID())){
-							Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
-							builder.setTransactionID(transaction.getTransactionID());
-							Operation abort = builder.build();
-							transaction.setStatus(Transaction.Status.ABORTED);
-							transaction.addOperations(abort);
-						}
-					}
-				}
-			}
-     	}
+        		transactionControler();
+        	}
 		System.out.println("TRANSACTION");
 		for (Transaction transaction: transactionMap.values()){
 			System.out.println(transaction);
@@ -532,6 +394,84 @@ public final class TransactionManager {
 		
 		g.init();
 		return g.removeDeadlock();
+	}
+	
+	private void transactionControler(){
+		//To be Removed
+		//Print transactions: 
+		System.out.println("TRANSACTION");
+		for (Transaction transaction: transactionMap.values()){
+			System.out.println(transaction);
+		}
+
+		//create message builder: 
+		for (Transaction transaction: transactionMap.values()){
+			if (transaction.getOperationIndex() != -1 ){
+				for (Integer site: transaction.getSitesConcerned()){
+					messageBuilders[site-1].addOperation(transaction.getnextOperation());
+				}
+				if (transaction.getTimeout() > transaction.TIMEOUT_DELAY){
+					System.out.println("dead coz timeout"+transaction.getTransactionID());
+					Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
+					builder.setTransactionID(transaction.getTransactionID());
+					Operation abort = builder.build();
+					transaction.setStatus(Transaction.Status.ABORTED);
+					transaction.addOperations(abort);
+				}
+			}
+		}
+		
+		//Create message, send messages and get responses
+		for (int i=0; i<messageBuilders.length; i++){
+				
+			messages[i] = messageBuilders[i].build();	
+			System.out.println("Site "+(i+1)+" "+messages[i]);
+			dataManagers.get(i).sendMessage(messages[i]);
+			siteResponses[i] = dataManagers.get(i).update();
+			for (Response r: siteResponses[i]){
+				transactionMap.get(r.getTransactionID()).sendResponse(r);
+			}
+			System.out.println("response message "+siteResponses[i]);
+			messageBuilders[i].clear();
+		}
+												
+		
+		//re-init
+		numberOfTransactionsOver = 0;
+		numberOfWaitingTransactions = 0;
+		for (Transaction transaction : transactionMap.values()){
+			transaction.reinit();
+			
+			//A transaction is over is Status is FINISH or ABORT: 
+			if (transaction.getIsTransactionOver()){	
+				numberOfTransactionsOver++;
+			}
+			
+			//Transaction graph: 
+			//if 2 transactions or more are waiting, called graphManager()
+			if (transaction.getStatus() == Transaction.Status.WAIT){
+				numberOfWaitingTransactions++;
+			}
+		}
+		
+
+		//Check deadlock in WaitForGraph: 
+		if (numberOfWaitingTransactions >=2){
+			ArrayList <String> removeList = graphManager();
+			if (removeList.size() >0){
+				for (Transaction transaction: transactionMap.values()){
+					if (removeList.contains(transaction.getTransactionID())){
+						Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
+						builder.setTransactionID(transaction.getTransactionID());
+						Operation abort = builder.build();
+						transaction.setStatus(Transaction.Status.ABORTED);
+						transaction.addOperations(abort);
+					}
+				}
+			}
+		}
+		System.out.println("END OF CYLCE\n\n");
+		
 	}
 	
 	public static void main (String[] args){
