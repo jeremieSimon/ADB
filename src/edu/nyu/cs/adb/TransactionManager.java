@@ -503,7 +503,7 @@ public final class TransactionManager {
 			TransactionManager TM = new TransactionManager (args[0], args[1]);
 		}
 		else {
-			TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest1.txt", "tt.txt");
+			TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest1.txt", "output.txt");
 		}	
 	}
 }

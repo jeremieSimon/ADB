@@ -1,5 +1,13 @@
-# Compile
+# Compile: 
 javac -classpath src -d bin src/edu/nyu/cs/adb/*.java
 
-# Run
+# Run: 
 java -classpath bin edu.nyu.cs.adb.RepCRecApp inputfile outputfile
+
+
+# How to use: 
+The output is printed to the file output.txt
+It works as follow: 
+For each cycle, it says what was read from the input
+For each cycle, it gives a notification if a transaction failed and tells why
+For each cycle, it prints a summary where the user can see all the transactions, their status, set of operations, locks hold and wait and the sites up. 
