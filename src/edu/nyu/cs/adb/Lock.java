@@ -5,6 +5,11 @@ public class Lock {
 	private String variableID; 
 	private String lockType; 
 	
+	/**
+	 * Lock  object built in the Transaction function. 
+	 * @param variableID
+	 * @param lockType
+	 */
 	public Lock(String variableID, String lockType){
 		
 		this.variableID = variableID; 
