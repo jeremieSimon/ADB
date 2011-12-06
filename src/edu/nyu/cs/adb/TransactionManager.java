@@ -111,8 +111,8 @@ public final class TransactionManager {
 	/**
 	 * Runs the simulation, taking a line of input in each timestep.
 	 * <ul>
-	 * <li>On â€˜begin Tiâ€™, it creates a new instance of Transaction</li>
-	 * <li>On â€˜end Tiâ€™, it deletes the instance i of Transaction</li>
+	 * <li>On Ôbegin TiÕ, it creates a new instance of Transaction</li>
+	 * <li>On Ôend TiÕ, it deletes the instance i of Transaction</li>
 	 * <li>On write, or read, it calls the addOperations(Operation) of the 
 	 * transaction concerned</li>
 	 * </ul>
@@ -261,10 +261,7 @@ public final class TransactionManager {
 					// commit
 					if (opcode.equals("end")) {
 						String transactionID = args[0];
-						
-						//Remove the transaction from transactions
-						System.out.println("REMOVE "+transactionID);
-						
+												
 						Operation.Builder builder = 
 							new Operation.Builder(Opcode.FINISH);
 						builder.setTransactionID(transactionID);
@@ -407,16 +404,17 @@ public final class TransactionManager {
 		//create message builder: 
 		for (Transaction transaction: transactionMap.values()){
 			if (transaction.getOperationIndex() != -1 ){
-				for (Integer site: transaction.getSitesConcerned()){
-					messageBuilders[site-1].addOperation(transaction.getnextOperation());
-				}
-				if (transaction.getTimeout() > transaction.TIMEOUT_DELAY){
+				
+				if (transaction.getTimeout() > transaction.TIMEOUT_DELAY && !transaction.getIsTransactionOver()){
 					System.out.println("dead coz timeout"+transaction.getTransactionID());
 					Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 					builder.setTransactionID(transaction.getTransactionID());
 					Operation abort = builder.build();
 					transaction.setStatus(Transaction.Status.ABORTED);
 					transaction.addOperations(abort);
+				}
+				for (Integer site: transaction.getSitesConcerned()){	
+					messageBuilders[site-1].addOperation(transaction.getnextOperation());
 				}
 			}
 		}
@@ -445,6 +443,7 @@ public final class TransactionManager {
 			//A transaction is over is Status is FINISH or ABORT: 
 			if (transaction.getIsTransactionOver()){	
 				numberOfTransactionsOver++;
+				transactionMap.remove(transaction);
 			}
 			
 			//Transaction graph: 
@@ -475,8 +474,11 @@ public final class TransactionManager {
 	}
 	
 	public static void main (String[] args){
-		
-		TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest13.txt", "tt.txt");
-		
+		if (args.length >= 2) {
+			TransactionManager TM = new TransactionManager (args[0], args[1]);
+		}
+		else {
+			TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest5.txt", "tt.txt");
+		}	
 	}
 }

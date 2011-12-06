@@ -282,16 +282,18 @@ public final class DataManager {
 
 					
 					// Apply before image to the database
-					System.out.println("debug "+beforeImages.size()+ " be" +beforeImages.get(transactionID)+" T "+transactionID);
-					Map<String, Integer> beforeImage = beforeImages.get(transactionID);
-					variableIDs = beforeImage.keySet();
-					for (String variableID : variableIDs) {
-						unstableStorage.put(variableID, 
-								beforeImage.get(variableID));
+					Map<String, Integer> beforeImage = 
+						beforeImages.get(transactionID);
+					if (beforeImage != null) {
+						variableIDs = beforeImage.keySet();
+						for (String variableID : variableIDs) {
+							unstableStorage.put(variableID, 
+									beforeImage.get(variableID));
+						}
+						
+						// Discard the before image
+						beforeImages.remove(transactionID);
 					}
-					
-					// Discard the before image
-					beforeImages.remove(transactionID);
 					
 					// Send success message back to the transaction manager
 					Response.Builder responseBuilder = 
@@ -617,7 +619,7 @@ public final class DataManager {
 	
 	/**
 	 * Tells the site to fail. The site loses all volatile data and lock 
-	 * information. The transaction manager wonâ€™t be able to send messages to 
+	 * information. The transaction manager wonÕt be able to send messages to 
 	 * this site until this site recovers.
 	 */
 	void fail () {

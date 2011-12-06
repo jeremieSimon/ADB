@@ -12,7 +12,7 @@ import edu.nyu.cs.adb.Operation.Opcode;
 /**
  * A data structure defining a transaction. 
  * <br>Instance of Transaction will be created by the Transaction Manager 
- * <br>Each time the Transaction Manager will read from the Script â€˜Begin Tiâ€™, 
+ * <br>Each time the Transaction Manager will read from the Script ÔBegin TiÕ, 
  * <br>it will create an instance of the transactions.
  * @author dandelarosa
  */
@@ -40,6 +40,7 @@ public final class Transaction {
 	final int TIMEOUT_DELAY = 30;
 	private Status status; 
 	private ArrayList <Integer> sitesUp; 
+	private ArrayList <Integer> originalSitesUp; 
 	private ArrayList <Integer> sitesConcerned = new ArrayList <Integer>(); 
 	
 	//Variables use to know what lock the transaction is holding 
@@ -69,7 +70,8 @@ public final class Transaction {
 		this.variableMap = variableMap; 
 		this.transactionID = transactionID; 
 		this.sitesUp = (ArrayList<Integer>) sitesUp.clone(); 
-		//sitesConcerned = (ArrayList<Integer>) this.sitesUp.clone();
+		originalSitesUp = (ArrayList<Integer>) sitesUp.clone(); 
+		System.out.println("Sites up when created "+this.originalSitesUp);
 		operationIndex = -1; 
 		status = Status.IDLE; 
 		this.age = age;
@@ -260,22 +262,28 @@ public final class Transaction {
 	}
 	
 	/**
-	 * Case 1. If no operations ever wrote, then site is added to the list
 	 * @param siteID
 	 */
 	void siteRecover(int siteID){
 		
 		boolean isWriteOperations = false; 
+		boolean cantRecover = false; 
+
+		System.out.println("Sites up when created "+this.originalSitesUp);
+
 		//iter on all operations before the operation index: 
 		for (int i=0; i<operationIndex; i++){
 			//Check if there exist a WRITE operation: 
+			System.out.println("debug "+operations.get(i).getOperationID()+" t "+transactionID);
 			if (operations.get(i).getOperationID() == Operation.Opcode.WRITE){
 				isWriteOperations = true;
 			}
+			if (!originalSitesUp.contains(siteID)){
+				cantRecover = true;
+			}
 		}
-		
 		//then add the site to the list of the sites up: 
-		if (!isWriteOperations){
+		if (!isWriteOperations && !cantRecover){
 			sitesUp.add(siteID);
 			Collections.sort(sitesUp);
 		}
@@ -326,6 +334,9 @@ public final class Transaction {
 			if (operations.get(operationIndex).getOperationID() == Operation.Opcode.FINISH){
 				return sitesUp;
 			}
+			if (operations.get(operationIndex).getOperationID() == Operation.Opcode.ABORT){
+				return new ArrayList <Integer>();
+				}
 			//See if variable is replicated or not
 			Integer variableID = Integer.parseInt(operations.get(operationIndex).getVariableID().substring(1));
 			if (variableID %2 != 0){
