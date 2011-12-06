@@ -45,7 +45,26 @@ public final class TransactionManager {
 	private ArrayList <Response>[] siteResponses = new ArrayList [NUMBER_OF_SITES];
 	private int age = 0; 
 
-
+	/**
+	 *  This is the constructor, with additional functionality
+	 * <ol>
+	 * <li>Create all sites, a site is a DM object</li>
+	 * <li>Assign each variable to the proper site</li>
+	 * <li>Create a variable map, that is a map where each key is a variable 
+	 * and the value would be a linked list where each node would be a site
+	 * </li>
+	 * <li>Create an instance of Wait-For-Graph</li>
+	 * </ol>
+	 * @param in the input stream
+	 * @param out the output stream
+	 */
+	  TransactionManager (InputStream in, PrintStream out) {
+	    // Set up reading and writing mechanisms
+	    InputStreamReader tempreader = new InputStreamReader(in);
+	    this.input = new BufferedReader(tempreader);
+	    this.output = out;
+	    this.init();
+	}
 	
 	/**
 	 * This is the constructor, with additional functionality

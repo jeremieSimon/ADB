@@ -19,8 +19,8 @@ public final class RepCRecApp {
 		TransactionManager sim = null;
 		if (args.length == 0) {
 			// If there are no arguments, use standard in and standard out
-			//sim = new TransactionManager(System.in, System.out);
-			throw new AssertionError("Zero arguments not supported anymore");
+			sim = new TransactionManager(System.in, System.out);
+			//throw new AssertionError("Zero arguments not supported anymore");
 		}
 		else if (args.length == 1) {
 			PrintStream out;
@@ -32,8 +32,8 @@ public final class RepCRecApp {
 						+ args[0]);
 			}
 			// If one argument, use standard in and the filename is output
-			//sim = new TransactionManager(System.in, out);
-			throw new AssertionError("One argument not supported anymore");
+			sim = new TransactionManager(System.in, out);
+			//throw new AssertionError("One argument not supported anymore");
 		}
 		else {
 			// If two or more arguments, use filename in and filename out
