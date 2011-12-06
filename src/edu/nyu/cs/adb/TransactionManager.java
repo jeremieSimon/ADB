@@ -129,8 +129,8 @@ public final class TransactionManager {
 	/**
 	 * Runs the simulation, taking a line of input in each timestep.
 	 * <ul>
-	 * <li>On �begin Ti�, it creates a new instance of Transaction</li>
-	 * <li>On �end Ti�, it deletes the instance i of Transaction</li>
+	 * <li>On begin, it creates a new instance of Transaction</li>
+	 * <li>On end, it deletes the instance i of Transaction</li>
 	 * <li>On write, or read, it calls the addOperations(Operation) of the 
 	 * transaction concerned</li>
 	 * </ul>
