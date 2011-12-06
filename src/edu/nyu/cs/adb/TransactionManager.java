@@ -309,7 +309,7 @@ public final class TransactionManager {
 						
 						int siteID = Integer.parseInt(args[0]);
 						
-						output.println("Site failure "+siteID);
+						output.println("Read Message:\nSite failure "+siteID+"\n");
 						
 						//0. remove site from sitesUp: 
 						sitesUp.remove(sitesUp.indexOf(siteID));
@@ -317,7 +317,7 @@ public final class TransactionManager {
 						for (Transaction transaction : transactionMap.values()){
 							transaction.siteFailure(siteID);
 							if (transaction.getStatus() == Transaction.Status.ABORTED){
-								output.println(transaction.getTransactionID() + " aborted due to site failure");
+								output.println("Notification: \n"+transaction.getTransactionID() + " aborted due to site failure");
 								Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 								builder.setTransactionID(transaction.getTransactionID());
 								Operation abort = builder.build();
@@ -424,7 +424,7 @@ public final class TransactionManager {
 			if (transaction.getOperationIndex() != -1 ){
 				
 				if (transaction.getTimeout() > transaction.TIMEOUT_DELAY && !transaction.getIsTransactionOver()){
-					output.println(transaction.getTransactionID() + " Aborted due to timeout");
+					output.println("Notification: \n"+transaction.getTransactionID() + " Aborted due to timeout");
 					Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 					builder.setTransactionID(transaction.getTransactionID());
 					Operation abort = builder.build();
@@ -478,7 +478,7 @@ public final class TransactionManager {
 			if (removeList.size() >0){
 				for (Transaction transaction: transactionMap.values()){
 					if (removeList.contains(transaction.getTransactionID())){
-						output.println(transaction.getTransactionID() + " aborted due to wait-die protocol");
+						output.println("Notification:\n"+transaction.getTransactionID() + " aborted due to wait-die protocol");
 						Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 						builder.setTransactionID(transaction.getTransactionID());
 						Operation abort = builder.build();

@@ -176,14 +176,16 @@ Operation [transactionID=T2, opcode=BEGIN, variableID=null, writeValue=0]
 Operation [transactionID=T2, opcode=READ, variableID=x2, writeValue=0]
 Operation [transactionID=T2, opcode=WRITE, variableID=x2, writeValue=2]
 lock hold [Var: x2
-Type: READ, Var: x2
-Type: WRITE]
+Type: WRITE, Var: x2
+Type: READ]
 lock wait []
 Sites Up: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 ##########
 
+Read Message:
 Site failure 1
+
 T2 aborted due to site failure
 Transaction ID: T1
 Status ACTIVE
@@ -522,9 +524,9 @@ Operation [transactionID=T1, opcode=READ, variableID=x8, writeValue=0]
 Operation [transactionID=T1, opcode=WRITE, variableID=x8, writeValue=8]
 lock hold [Var: x1
 Type: WRITE, Var: x8
-Type: READ, Var: x1
 Type: READ, Var: x8
-Type: WRITE]
+Type: WRITE, Var: x1
+Type: READ]
 lock wait []
 Sites Up: [2, 3, 4, 5, 6, 7, 8, 9, 10]
 
