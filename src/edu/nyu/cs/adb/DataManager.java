@@ -654,16 +654,17 @@ public final class DataManager {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Contents of site ");
 		sb.append(siteID);
-		sb.append(":\n");
+		sb.append(": ");
 		for (int i = 1; i <= 20; i++) {
 			String variableID = "x" + i;
 			if (stableStorage.containsKey(variableID)) {
 				sb.append(variableID);
 				sb.append("=");
 				sb.append(stableStorage.get(variableID).get(0).getValue());
-				sb.append("\n");
+				sb.append(" ");
 			}
 		}
+		sb.append("\n");
 		return sb.toString();
 	}
 	
