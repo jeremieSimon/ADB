@@ -66,7 +66,6 @@ public class WaitForGraph {
 	 * @param nodeID
 	 */
 	void removeNode(String nodeID){
-		System.out.println("Remove "+nodeID);
 		waitForGraph.remove(nodeID);
 		for (ArrayList <String> n: waitForGraph.values()){
 			if (n.contains(nodeID)){
@@ -114,7 +113,6 @@ public class WaitForGraph {
 				//Discover all neighbors
 				while (!pathQueue.isEmpty()){
 					String nodePath = pathQueue.poll();
-					System.out.println("Visit "+nodePath);
 					cycle.add(nodePath);
 					ArrayList <String> neighbors = waitForGraph.get(nodePath);
 					if (neighbors.size() > 0)
@@ -125,7 +123,6 @@ public class WaitForGraph {
 						if (nodeMap.get(neighbor) == 0)
 							pathQueue.add(neighbor);
 						else if (nodeMap.get(neighbor) == 1){
-							System.out.println("Cycle detected "+neighbor);
 							return cycle;
 						}
 					}
@@ -145,7 +142,6 @@ public class WaitForGraph {
 		ArrayList <String> cycle = new  ArrayList <String>(); 
 		ArrayList <String> nodeRemoved = new ArrayList <String>();
 		while (cycle != null){
-			System.out.println("iter");
 			cycle = checkCyle();
 			if (cycle == null)
 				break;

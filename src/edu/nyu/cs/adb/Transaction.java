@@ -80,7 +80,6 @@ public final class Transaction {
 		this.transactionID = transactionID; 
 		this.sitesUp = (ArrayList<Integer>) sitesUp.clone(); 
 		originalSitesUp = (ArrayList<Integer>) sitesUp.clone(); 
-		System.out.println("Sites up when created "+this.originalSitesUp);
 		operationIndex = -1; 
 		status = Status.IDLE; 
 		this.age = age;
@@ -213,7 +212,6 @@ public final class Transaction {
 		//Operation failed: 
 		//Release all locks
 		else if (isFailed && isResponse){
-			System.out.println("operation failed flag");
 			status = Status.ABORTED;
 			locksWait.clear();
 			locksHold.clear();
@@ -293,12 +291,10 @@ public final class Transaction {
 		boolean isWriteOperations = false; 
 		boolean cantRecover = false; 
 
-		System.out.println("Sites up when created "+this.originalSitesUp);
 
 		//iter on all operations before the operation index: 
 		for (int i=0; i<operationIndex; i++){
 			//Check if there exist a WRITE operation: 
-			System.out.println("debug "+operations.get(i).getOperationID()+" t "+transactionID);
 			if (operations.get(i).getOperationID() == Operation.Opcode.WRITE){
 				isWriteOperations = true;
 			}

@@ -187,6 +187,7 @@ public final class TransactionManager {
 
 						transactionMap.get(transactionID).addOperations(begin);
 
+						output.println("Read Message:\n"+transactionID+" BEGIN \n");
 					}
 					
 					// beginRO(T3) says that T3 is read-only
@@ -202,7 +203,9 @@ public final class TransactionManager {
 							new Operation.Builder(Opcode.BEGIN_READONLY);
 						builder.setTransactionID(transactionID);
 						Operation beginRO = builder.build();
-						// TODO implement the rest
+
+						output.println("Read Message:\n"+transactionID+" BEGIN as RO\n");
+
 					}
 					
 					// R(T1,x4) says transaction 1 wishes to read x4 (provided 
@@ -221,6 +224,9 @@ public final class TransactionManager {
 						
 						// Append the operation to the correct transaction: 
 						transactionMap.get(transactionID).addOperations(read);
+						
+						output.println("Read Message: \nTransaction "+transactionID+" wishes to read "+variableID+"\n"); 
+						
 					}
 					
 					// W(T1,x6,v) says transaction 1 wishes to write all 
@@ -239,6 +245,10 @@ public final class TransactionManager {
 						
 						// Append the operation to the correct transaction: 
 						transactionMap.get(transactionID).addOperations(write);
+						
+						
+						output.println("Read Message: \nTransaction "+transactionID+" wishes to write all available copies of "+variableID+" (provided it can get the locks) " +
+								"with the value "+writeValue+"\n");
 					}
 					
 					// See below for specific cases for dump
@@ -251,7 +261,6 @@ public final class TransactionManager {
 						if (arg.length() == 0) {
 							for (DataManager dm : dataManagers) {
 								output.println(dm.dump());
-								System.out.println(dm.dump());
 							}
 						}
 						// dump(xj) gives the committed values of all copies of
@@ -260,7 +269,6 @@ public final class TransactionManager {
 							String variableID = arg;
 							for (DataManager dm : dataManagers) {
 								output.println(dm.dump(variableID));
-								System.out.println(dm.dump(variableID));
 							}
 						}
 						// dump(i) gives the committed values of all copies of 
@@ -274,7 +282,6 @@ public final class TransactionManager {
 							// Remember that sites are zero-indexed
 							DataManager dm = dataManagers.get(siteID - 1);
 							output.println(dm.dump());
-							System.out.println(dm.dump());
 						}
 					}
 					
@@ -289,6 +296,9 @@ public final class TransactionManager {
 						Operation endOperation = builder.build();
 						//Add end operation
 						transactionMap.get(transactionID).addOperations(endOperation);
+						
+						output.println("Read Message: \n"+transactionID+" whishes to finish\n");
+
 
 					}
 					
@@ -299,7 +309,7 @@ public final class TransactionManager {
 						
 						int siteID = Integer.parseInt(args[0]);
 						
-						System.out.println("Site failure "+siteID);
+						output.println("Site failure "+siteID);
 						
 						//0. remove site from sitesUp: 
 						sitesUp.remove(sitesUp.indexOf(siteID));
@@ -414,7 +424,6 @@ public final class TransactionManager {
 			if (transaction.getOperationIndex() != -1 ){
 				
 				if (transaction.getTimeout() > transaction.TIMEOUT_DELAY && !transaction.getIsTransactionOver()){
-					System.out.println("dead coz timeout"+transaction.getTransactionID());
 					output.println(transaction.getTransactionID() + " Aborted due to timeout");
 					Operation.Builder builder = new Operation.Builder(Opcode.ABORT);
 					builder.setTransactionID(transaction.getTransactionID());
@@ -432,13 +441,13 @@ public final class TransactionManager {
 		for (int i=0; i<messageBuilders.length; i++){
 				
 			messages[i] = messageBuilders[i].build();	
-			System.out.println("Site "+(i+1)+" "+messages[i]);
+			//System.out.println("Site "+(i+1)+" "+messages[i]);
 			dataManagers.get(i).sendMessage(messages[i]);
 			siteResponses[i] = dataManagers.get(i).update();
 			for (Response r: siteResponses[i]){
 				transactionMap.get(r.getTransactionID()).sendResponse(r);
 			}
-			System.out.println("response message "+siteResponses[i]);
+			//System.out.println("response message "+siteResponses[i]);
 			messageBuilders[i].clear();
 		}
 												
@@ -478,7 +487,12 @@ public final class TransactionManager {
 					}
 				}
 			}
-		}		
+		}	
+		
+		for (Transaction transaction: transactionMap.values()){
+			output.println(transaction);
+		}
+		output.println("##########\n");
 	}
 	
 	public static void main (String[] args){
@@ -486,7 +500,7 @@ public final class TransactionManager {
 			TransactionManager TM = new TransactionManager (args[0], args[1]);
 		}
 		else {
-			TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest5.txt", "tt.txt");
+			TransactionManager TM = new TransactionManager ("testscripts/input/ADBPartIITest1.txt", "tt.txt");
 		}	
 	}
 }
