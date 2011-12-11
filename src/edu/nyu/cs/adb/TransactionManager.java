@@ -204,6 +204,9 @@ public final class TransactionManager {
 						builder.setTransactionID(transactionID);
 						Operation beginRO = builder.build();
 
+						transactionMap.get(transactionID).addOperations(beginRO);
+
+						
 						output.println("Read Message:\n"+transactionID+" BEGIN as RO\n");
 
 					}
